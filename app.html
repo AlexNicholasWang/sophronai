@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#09090b" />
+<meta name="description" content="Sophron evaluates the consequences of autonomous-agent actions before execution." />
+<title>Sophron — Consequence Engine</title>
+<link rel="icon" type="image/png" href="assets/favicon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&family=Geist+Mono:wght@400;500&display=swap" />
+<style>
+:root{color-scheme:dark;--bg:#09090b;--panel:#111113;--panel2:#17171a;--line:#29292e;--text:#f4f4f5;--muted:#9b9ba3;--soft:#d4d4d8;--green:#84cc9a;--amber:#f7b955;--red:#f47f7f;--blue:#a5b4fc;--r:18px;--sm:11px;--ease:cubic-bezier(.2,.7,.2,1)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased;background-image:radial-gradient(60% 40% at 50% -15%,rgba(255,255,255,.075),transparent),linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:auto,48px 48px,48px 48px}
+a{color:inherit;text-decoration:none}button,input,textarea{font:inherit}button{color:inherit}.mono{font-family:"Geist Mono",monospace}.muted{color:var(--muted)}
+.shell{min-height:100vh}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rgba(255,255,255,.07);background:rgba(9,9,11,.82);backdrop-filter:blur(16px)}
+.topin{height:68px;width:min(1440px,calc(100% - 32px));margin:auto;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:600;letter-spacing:-.03em}.brand img{width:38px;height:30px;object-fit:contain}.topnav{display:flex;align-items:center;gap:10px}.status{display:flex;align-items:center;gap:8px;font:12px "Geist Mono",monospace;color:var(--muted);padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:var(--panel)}.status i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(132,204,154,.08)}
+.ghost,.primary,.tiny{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:10px 15px;cursor:pointer;transition:.2s var(--ease);font-weight:500}.ghost:hover,.tiny:hover{border-color:#4b4b52;background:var(--panel2)}.primary{background:var(--text);color:#09090b;border-color:var(--text)}.primary:hover{transform:translateY(-1px);box-shadow:0 10px 30px -12px rgba(255,255,255,.35)}.primary:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}.tiny{padding:7px 11px;font-size:12px}
+.layout{width:min(1440px,calc(100% - 32px));margin:0 auto;display:grid;grid-template-columns:430px minmax(0,1fr);gap:18px;padding:18px 0 34px}.panel{background:rgba(17,17,19,.9);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 30px 70px -45px rgba(255,255,255,.18)}.inputPanel{padding:24px;position:sticky;top:86px;align-self:start}.eyebrow{font:11px "Geist Mono",monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}h1{font-size:36px;line-height:1.03;letter-spacing:-.045em;margin:10px 0 10px}h2,h3,p{margin:0}.lead{font-size:15px;color:var(--muted);margin-bottom:22px}
+label{display:grid;gap:7px;margin-top:15px;color:var(--soft);font-size:13px}.req{color:var(--muted)}input,textarea{width:100%;border:1px solid #34343a;background:#0e0e10;color:var(--text);border-radius:12px;padding:12px 13px;outline:none;resize:vertical;transition:border .18s,box-shadow .18s}input:focus,textarea:focus{border-color:#6a6a75;box-shadow:0 0 0 3px rgba(255,255,255,.05)}textarea{min-height:94px}.short{min-height:72px}.actions{display:flex;gap:9px;margin-top:18px}.actions .primary{flex:1;border-radius:12px}.actions .ghost{border-radius:12px}
+.examples{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.chip{border:1px solid var(--line);background:transparent;color:var(--muted);padding:7px 9px;border-radius:999px;font-size:12px;cursor:pointer}.chip:hover{color:var(--text);border-color:#4c4c55}.rule{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:flex-start}.rule b{display:block;font-size:13px;margin-bottom:2px}.rule p{font-size:12px;color:var(--muted)}.rule .num{width:28px;height:28px;border:1px solid var(--line);border-radius:9px;display:grid;place-items:center;font:11px "Geist Mono",monospace;flex:none}
+.results{display:grid;gap:18px;min-width:0}.heroPanel{padding:26px;min-height:230px;display:grid;align-content:center;position:relative;overflow:hidden}.heroPanel:after{content:"";position:absolute;inset:auto -70px -120px auto;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.06),transparent 67%);pointer-events:none}.empty h2{font-size:32px;letter-spacing:-.04em;margin:10px 0}.empty p{max-width:670px;color:var(--muted);font-size:16px}.emptyFlow{display:flex;gap:10px;align-items:center;margin-top:24px;flex-wrap:wrap}.flowbox{padding:10px 12px;border:1px solid var(--line);border-radius:10px;color:var(--soft);font-size:13px;background:#0e0e10}.arrow{color:#55555f}
+.summaryTop{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.verdict{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:7px 10px;font:12px "Geist Mono",monospace;text-transform:uppercase;letter-spacing:.05em;border:1px solid}.verdict i{width:7px;height:7px;border-radius:50%}.approve{color:var(--green);border-color:rgba(132,204,154,.28);background:rgba(132,204,154,.06)}.approve i{background:var(--green)}.modify{color:var(--amber);border-color:rgba(247,185,85,.28);background:rgba(247,185,85,.06)}.modify i{background:var(--amber)}.block{color:var(--red);border-color:rgba(244,127,127,.28);background:rgba(244,127,127,.06)}.block i{background:var(--red)}
+.summary h2{font-size:31px;line-height:1.07;letter-spacing:-.04em;margin:12px 0 11px}.summaryText{font-size:16px;color:#c6c6cc;max-width:850px}.meters{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}.meter{border:1px solid var(--line);background:#0d0d0f;border-radius:12px;padding:13px}.meter small{display:block;color:var(--muted);font-size:11px;margin-bottom:6px}.meter strong{font:500 19px "Geist Mono",monospace}.meter .track{height:5px;background:#242429;border-radius:99px;overflow:hidden;margin-top:8px}.meter .fill{height:100%;background:var(--soft);width:0;transition:width .7s var(--ease)}.source{font:11px "Geist Mono",monospace;color:var(--muted);text-align:right}
+.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,.9fr);gap:18px}.section{padding:22px}.sectionHead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:16px}.sectionHead h3{font-size:19px;letter-spacing:-.025em}.sectionHead span{font:11px "Geist Mono",monospace;color:var(--muted)}
+.timeline{display:grid;gap:10px}.consequence{display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:start;padding:14px;border:1px solid var(--line);background:#0e0e10;border-radius:13px}.order{font:11px "Geist Mono",monospace;color:var(--muted);padding-top:2px}.consequence h4{margin:0 0 4px;font-size:14px;font-weight:500}.consequence p{font-size:12px;color:var(--muted)}.tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.tag{font:10px "Geist Mono",monospace;border:1px solid var(--line);border-radius:999px;padding:5px 7px;color:var(--muted);white-space:nowrap}.tag.critical,.tag.high{color:var(--red);border-color:rgba(244,127,127,.2)}.tag.positive{color:var(--green);border-color:rgba(132,204,154,.2)}
+.list{display:grid;gap:9px}.item{border:1px solid var(--line);background:#0e0e10;border-radius:12px;padding:12px}.item b{font-size:13px;display:block;margin-bottom:4px}.item p,.simple li{font-size:12px;color:var(--muted)}.simple{padding:0;margin:0;list-style:none;display:grid;gap:8px}.simple li{position:relative;padding-left:16px}.simple li:before{content:"";width:5px;height:5px;border-radius:50%;background:#666671;position:absolute;left:1px;top:.55em}.stack{display:grid;gap:18px}
+.revised{font-size:15px;color:#d8d8dd;border-left:2px solid var(--amber);padding-left:14px}.stop{font-size:12px;color:var(--muted);margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
+.loading{display:none;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin-top:12px}.loading.show{display:flex}.spin{width:14px;height:14px;border:2px solid #39393f;border-top-color:#eee;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.fade{animation:fade .35s var(--ease)}@keyframes fade{from{opacity:0;transform:translateY(6px)}}
+@media(max-width:1050px){.layout{grid-template-columns:1fr}.inputPanel{position:relative;top:auto}.grid2{grid-template-columns:1fr}.meters{grid-template-columns:repeat(3,1fr)}}@media(max-width:650px){.topin,.layout{width:min(100% - 20px,1440px)}.topnav .status{display:none}.layout{padding-top:10px}.inputPanel,.section,.heroPanel{padding:18px}.meters{grid-template-columns:1fr}.consequence{grid-template-columns:48px 1fr}.tags{grid-column:2;justify-content:flex-start}.summaryTop{display:block}.source{text-align:left;margin-top:10px}.emptyFlow{display:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="top"><div class="topin">
+  <a class="brand" href="index.html"><img src="assets/sophron-mark.png" alt="" />sophron</a>
+  <div class="topnav"><div class="status"><i></i> consequence engine / mvp</div><a class="ghost tiny" href="index.html">About Sophron</a></div>
+</div></header>
+
+<main class="layout">
+  <aside class="panel inputPanel">
+    <div class="eyebrow">Decision preflight</div>
+    <h1>Think before the agent acts.</h1>
+    <p class="lead">Describe an agent action. Sophron rolls forward the consequences, exposes uncertainty, and recommends whether to execute it.</p>
+
+    <label>Goal <span class="req">What is the agent trying to achieve?</span>
+      <input id="goal" maxlength="1200" placeholder="Reduce support backlog without hurting customer trust" />
+    </label>
+    <label>Proposed action <span class="req">What is it about to do?</span>
+      <textarea id="action" maxlength="2400" placeholder="Automatically refund and close every ticket older than 7 days..."></textarea>
+    </label>
+    <label>Context <span class="req">State, environment, stakeholders</span>
+      <textarea class="short" id="context" maxlength="3200" placeholder="2,000 open tickets; refunds above $200 normally require review..."></textarea>
+    </label>
+    <label>Constraints <span class="req">Policies, permissions, limits</span>
+      <textarea class="short" id="constraints" maxlength="1600" placeholder="Never send irreversible external actions without authorization..."></textarea>
+    </label>
+
+    <div class="actions"><button class="primary" id="run">Run consequence check</button><button class="ghost" id="clear">Clear</button></div>
+    <div class="loading" id="loading"><span class="spin"></span><span id="loadingText">Building bounded causal rollout…</span></div>
+
+    <div class="examples">
+      <button class="chip" data-example="deploy">deployment agent</button>
+      <button class="chip" data-example="support">support agent</button>
+      <button class="chip" data-example="outreach">outreach agent</button>
+    </div>
+
+    <div class="rule"><div class="num">03</div><div><b>Bounded by design</b><p>Sophron stops at three causal orders—or earlier when more speculation would not change the decision. Unknowns become explicit evidence gaps, not another simulator.</p></div></div>
+  </aside>
+
+  <section class="results" id="results">
+    <div class="panel heroPanel empty" id="hero">
+      <div>
+        <div class="eyebrow">Sophron consequence layer</div>
+        <h2>A decision boundary between reasoning and execution.</h2>
+        <p>The MVP does not pretend to know the whole future. It asks a narrower question: <strong style="color:#ddd">“Do the decision-relevant consequences we can justify support this action?”</strong></p>
+        <div class="emptyFlow"><span class="flowbox">agent proposes action</span><span class="arrow">→</span><span class="flowbox">bounded rollout</span><span class="arrow">→</span><span class="flowbox">assumptions + unknowns</span><span class="arrow">→</span><span class="flowbox">approve / modify / block</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+</div>
+
+<script>
+var examples = {
+  deploy: {
+    goal: "Restore reliability after a production error spike.",
+    action: "The deployment agent wants to immediately roll back the payments service to the previous release across 100% of production.",
+    context: "Checkout errors rose from 0.4% to 8.2% five minutes after deploy. The previous release is known stable, but 7% of new payment records use a schema introduced in the new version.",
+    constraints: "Avoid data corruption. Prefer reversible actions. Changes affecting all production traffic should have a staged rollout when feasible."
+  },
+  support: {
+    goal: "Reduce the customer support backlog quickly while preserving trust.",
+    action: "The support agent wants to automatically refund and close every unresolved ticket older than seven days.",
+    context: "There are 2,000 open tickets. Refund amounts range from $5 to $2,500. Some tickets are bug reports, some are billing disputes, and some contain unresolved fraud indicators.",
+    constraints: "Refunds above $200 require human approval. Fraud-related cases cannot be auto-closed. Customers must receive an explanation for account changes."
+  },
+  outreach: {
+    goal: "Book more sales conversations with companies likely to be hiring.",
+    action: "The outreach agent wants to email 500 inferred hiring managers today using addresses enriched from public data.",
+    context: "The model is 73% confident in role matching. Several companies have multiple possible contacts. No recipient has previously interacted with us.",
+    constraints: "Avoid spam-like behavior, respect opt-outs, and do not represent inferred facts as confirmed facts."
+  }
+};
+
+function setExample(name){
+  var x=examples[name]; if(!x)return;
+  document.getElementById("goal").value=x.goal;
+  document.getElementById("action").value=x.action;
+  document.getElementById("context").value=x.context;
+  document.getElementById("constraints").value=x.constraints;
+}
+
+document.querySelectorAll("[data-example]").forEach(function(b){
+  b.addEventListener("click",function(){setExample(b.getAttribute("data-example"));});
+});
+
+document.getElementById("clear").addEventListener("click",function(){
+  ["goal","action","context","constraints"].forEach(function(id){document.getElementById(id).value="";});
+  resetResults();
+});
+
+function resetResults(){
+  document.getElementById("results").innerHTML =
+    '<div class="panel heroPanel empty" id="hero"><div><div class="eyebrow">Sophron consequence layer</div><h2>A decision boundary between reasoning and execution.</h2><p>The MVP does not pretend to know the whole future. It asks a narrower question: <strong style="color:#ddd">“Do the decision-relevant consequences we can justify support this action?”</strong></p><div class="emptyFlow"><span class="flowbox">agent proposes action</span><span class="arrow">→</span><span class="flowbox">bounded rollout</span><span class="arrow">→</span><span class="flowbox">assumptions + unknowns</span><span class="arrow">→</span><span class="flowbox">approve / modify / block</span></div></div></div>';
+}
+
+function esc(s){
+  return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c];});
+}
+function clamp(n){n=Number(n)||0;return Math.max(0,Math.min(100,Math.round(n)));}
+
+function localEvaluate(data){
+  var text=(data.goal+" "+data.action+" "+data.context+" "+data.constraints).toLowerCase();
+  var risk=34, flags=[];
+  var high=["delete","100%","all production","every","500","refund","irreversible","payment","fraud","credentials","publish","send","transfer","external"];
+  high.forEach(function(k){if(text.indexOf(k)>=0){risk+=5;flags.push(k);}});
+  var safeguards=[];
+  if(/100%|all production|every|500/.test(text)) safeguards.push("Reduce blast radius with a staged or sampled rollout before full execution.");
+  if(/send|email|publish|external|customer/.test(text)) safeguards.push("Require a preview or approval gate before externally visible actions.");
+  if(/refund|payment|transfer|billing/.test(text)) safeguards.push("Apply explicit monetary thresholds and route exceptions to human review.");
+  if(/delete|close|rollback|irreversible/.test(text)) safeguards.push("Preserve reversibility with snapshots, rollback points, or a hold period.");
+  if(!safeguards.length) safeguards.push("Start with the smallest reversible action and observe outcomes before expanding scope.");
+  risk=Math.min(92,risk);
+  var verdict=risk>=70?"block":risk>=45?"modify":"approve";
+  var confidence=64;
+  var direct="The action is likely to move the system toward the stated goal, but its immediate blast radius is larger than necessary.";
+  var second="Affected users, services, or operators may react to the action in ways that amplify both benefits and mistakes.";
+  var third="If the initial assumptions are wrong, repeated autonomous execution could turn a local error into a systemic one.";
+  if(/deploy|production|rollback|service/.test(text)){
+    direct="A rollback may quickly reduce the observed error rate and restore the previously stable code path.";
+    second="Records written under the new schema may become incompatible with the previous release, creating a data-integrity risk.";
+    third="A full rollback without schema checks could trade an availability incident for a harder-to-repair consistency incident.";
+  } else if(/support|ticket|refund/.test(text)){
+    direct="Older tickets would disappear quickly and some customers would receive fast compensation.";
+    second="Blanket refunds and closures would mishandle high-value, fraud, and non-billing cases while bypassing required review.";
+    third="Incorrect automated resolutions could create financial leakage and lower customer trust even if backlog metrics improve.";
+  } else if(/email|outreach|hiring manager/.test(text)){
+    direct="Sending at full scale could generate near-term conversations and rapidly test the targeting thesis.";
+    second="Incorrect role inference or repetitive outreach can create spam complaints, opt-outs, and damage sender reputation.";
+    third="If low-confidence contact inference is repeatedly treated as fact, deliverability and brand trust may deteriorate across future campaigns.";
+  }
+  return {
+    summary: verdict==="approve" ? "The action is sufficiently bounded to proceed, with monitoring." : verdict==="modify" ? "The goal is reasonable, but the proposed action should be narrowed before execution." : "The proposed action has too much blast radius or unresolved downside to execute as written.",
+    verdict: verdict,
+    confidence: confidence,
+    overallRisk: risk,
+    boundedHorizon: "3 causal orders",
+    assumptions: [
+      "The supplied context is materially complete.",
+      "The agent has the permissions implied by the proposed action.",
+      "Observed short-term signals are representative enough to inform the decision."
+    ],
+    consequences: [
+      {order:1,outcome:direct,likelihood:"high",impact:risk>65?"high":"medium",valence:"mixed",rationale:"Direct effect of the proposed action."},
+      {order:2,outcome:second,likelihood:"medium",impact:risk>65?"critical":"high",valence:"negative",rationale:"Likely dependency or stakeholder response."},
+      {order:3,outcome:third,likelihood:"medium",impact:"high",valence:"negative",rationale:"Downstream effect included because it could change the decision."}
+    ],
+    failureModes: [
+      {mode:"Blast-radius failure",trigger:"The action is applied broadly before assumptions are validated.",mitigation:safeguards[0]},
+      {mode:"Hidden-context failure",trigger:"A relevant state, exception, or dependency is missing from the prompt.",mitigation:"Add a precondition check and fail closed when required context is absent."}
+    ],
+    unknowns:[
+      "How accurate and complete the current environment state is.",
+      "Whether there are edge cases or permissions not represented in the supplied constraints."
+    ],
+    safeguards:safeguards.slice(0,4),
+    revisedAction:"Run the action on the smallest reversible scope first, validate the highest-risk assumption, then expand only if monitored outcomes stay within explicit thresholds.",
+    stopReason:"Stopped at the fixed three-order causal horizon; deeper branches would be increasingly speculative without new evidence."
+  };
+}
+
+function renderEvaluation(e, source){
+  var verdict=(e.verdict||"modify").toLowerCase();
+  if(["approve","modify","block"].indexOf(verdict)<0) verdict="modify";
+  var risk=clamp(e.overallRisk), conf=clamp(e.confidence);
+  var consequences=Array.isArray(e.consequences)?e.consequences:[];
+  var assumptions=Array.isArray(e.assumptions)?e.assumptions:[];
+  var unknowns=Array.isArray(e.unknowns)?e.unknowns:[];
+  var safeguards=Array.isArray(e.safeguards)?e.safeguards:[];
+  var failures=Array.isArray(e.failureModes)?e.failureModes:[];
+
+  var timeline=consequences.map(function(c){
+    return '<div class="consequence"><div class="order">ORDER '+esc(c.order)+'</div><div><h4>'+esc(c.outcome)+'</h4><p>'+esc(c.rationale||"")+'</p></div><div class="tags"><span class="tag '+esc(c.impact)+'">'+esc(c.impact||"")+' impact</span><span class="tag '+esc(c.valence)+'">'+esc(c.likelihood||"")+' likelihood</span></div></div>';
+  }).join("");
+
+  var failureHtml=failures.map(function(f){
+    return '<div class="item"><b>'+esc(f.mode)+'</b><p><strong style="color:#c8c8ce">Trigger:</strong> '+esc(f.trigger)+'<br><strong style="color:#c8c8ce">Mitigation:</strong> '+esc(f.mitigation)+'</p></div>';
+  }).join("");
+
+  function list(arr){return '<ul class="simple">'+arr.map(function(x){return '<li>'+esc(x)+'</li>';}).join("")+'</ul>';}
+
+  document.getElementById("results").innerHTML =
+    '<div class="panel heroPanel summary fade">'+
+      '<div class="summaryTop"><div><div class="verdict '+verdict+'"><i></i>'+verdict+'</div><h2>'+esc(e.summary||"Evaluation complete.")+'</h2><p class="summaryText">'+
+      (verdict==="approve"?"Sophron found no decision-changing downside within the bounded horizon.":"Sophron found consequences that materially change how the action should be executed.")+
+      '</p></div><div class="source">'+esc(source==="model"?"MODEL EVALUATION":"LOCAL DEMO EVALUATOR")+'</div></div>'+
+      '<div class="meters"><div class="meter"><small>overall risk</small><strong>'+risk+'/100</strong><div class="track"><div class="fill" style="width:'+risk+'%"></div></div></div>'+
+      '<div class="meter"><small>confidence</small><strong>'+conf+'/100</strong><div class="track"><div class="fill" style="width:'+conf+'%"></div></div></div>'+
+      '<div class="meter"><small>causal horizon</small><strong style="font-size:15px">'+esc(e.boundedHorizon||"3 orders")+'</strong><div class="track"><div class="fill" style="width:100%"></div></div></div></div>'+
+    '</div>'+
+    '<div class="grid2 fade">'+
+      '<div class="panel section"><div class="sectionHead"><h3>Consequence rollout</h3><span>decision-relevant branches only</span></div><div class="timeline">'+timeline+'</div></div>'+
+      '<div class="stack">'+
+        '<div class="panel section"><div class="sectionHead"><h3>Assumptions</h3><span>what must be true</span></div>'+list(assumptions)+'</div>'+
+        '<div class="panel section"><div class="sectionHead"><h3>Unknowns</h3><span>evidence gaps</span></div>'+list(unknowns)+'</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="grid2 fade">'+
+      '<div class="panel section"><div class="sectionHead"><h3>Failure modes</h3><span>pre-mortem</span></div><div class="list">'+failureHtml+'</div></div>'+
+      '<div class="stack">'+
+        '<div class="panel section"><div class="sectionHead"><h3>Safeguards</h3><span>before execution</span></div>'+list(safeguards)+'</div>'+
+        '<div class="panel section"><div class="sectionHead"><h3>Revised action</h3><span>goal-preserving</span></div><p class="revised">'+esc(e.revisedAction||"")+'</p><p class="stop"><strong style="color:#c8c8ce">Why Sophron stopped:</strong> '+esc(e.stopReason||"Bounded horizon reached.")+'</p></div>'+
+      '</div>'+
+    '</div>';
+}
+
+document.getElementById("run").addEventListener("click", async function(){
+  var data={
+    goal:document.getElementById("goal").value.trim(),
+    action:document.getElementById("action").value.trim(),
+    context:document.getElementById("context").value.trim(),
+    constraints:document.getElementById("constraints").value.trim()
+  };
+  if(!data.goal||!data.action){
+    alert("Add a goal and a proposed action first.");
+    return;
+  }
+  var btn=document.getElementById("run"), loading=document.getElementById("loading");
+  btn.disabled=true; loading.classList.add("show");
+  document.getElementById("loadingText").textContent="Building bounded causal rollout…";
+
+  try{
+    var response=await fetch("/api/evaluate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
+    var payload=await response.json().catch(function(){return {};});
+    if(response.ok&&payload.evaluation){
+      renderEvaluation(payload.evaluation,payload.source||"model");
+    }else{
+      document.getElementById("loadingText").textContent="AI route not configured — running local demo evaluator…";
+      await new Promise(function(r){setTimeout(r,300);});
+      renderEvaluation(localEvaluate(data),"local");
+    }
+  }catch(err){
+    renderEvaluation(localEvaluate(data),"local");
+  }finally{
+    btn.disabled=false; loading.classList.remove("show");
+  }
+});
+
+setExample("deploy");
+</script>
+</body>
+</html>
