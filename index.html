@@ -60,6 +60,19 @@ canvas{width:100%;aspect-ratio:16/10;display:block;border-radius:12px;background
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:30px;transition:transform .35s var(--ease),border-color .3s,box-shadow .35s}
 .card:hover{transform:translateY(-4px);border-color:var(--blue);box-shadow:0 24px 50px -24px rgba(255,255,255,.18)}.card h3{font-size:24px;letter-spacing:-.03em;margin:34px 0 10px}
 .card .mono{color:var(--blue)}
+.pricing-intro{display:flex;justify-content:space-between;gap:30px;align-items:end}.pricing-intro p{max-width:430px;font-size:17px}
+.pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:48px}
+.price-card{position:relative;display:flex;flex-direction:column;min-height:450px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:26px;transition:transform .3s var(--ease),border-color .3s,box-shadow .3s}
+.price-card:hover{transform:translateY(-4px);border-color:#52525b;box-shadow:0 24px 50px -28px rgba(255,255,255,.16)}
+.price-card.featured{border-color:#71717a;background:linear-gradient(180deg,#18181b,#111113)}
+.price-badge{position:absolute;right:18px;top:18px;font-family:"Geist Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:5px 8px;border:1px solid #52525b;border-radius:999px;color:#d4d4d8}
+.price-name{font-size:20px;letter-spacing:-.025em}.price-desc{font-size:13px;min-height:58px;margin-top:9px}
+.price{display:flex;align-items:baseline;gap:5px;margin:24px 0 5px}.price strong{font-size:38px;font-weight:500;letter-spacing:-.05em}.price span{font-size:13px;color:var(--muted)}
+.price-note{font-size:11px;min-height:18px}
+.features{list-style:none;padding:0;margin:24px 0 28px;display:grid;gap:11px;font-size:13px;color:#c7c7cc}
+.features li{position:relative;padding-left:17px}.features li:before{content:"";position:absolute;left:1px;top:.55em;width:5px;height:5px;border-radius:50%;background:#71717a}
+.price-card .btn{margin-top:auto;justify-content:center;width:100%;padding:11px 14px}.price-card .btn.ghost{background:transparent}
+.pricing-foot{margin-top:18px;font-size:12px;color:var(--muted);text-align:center}
 .contact{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}.contact h2{margin-bottom:22px}
 form{display:grid;gap:18px;background:var(--paper);padding:30px;border-radius:var(--r);border:1px solid var(--line)}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 label{display:grid;gap:8px;font-size:14px;color:#a1a1aa;transition:color .2s}label:focus-within{color:#fff}
@@ -71,7 +84,8 @@ footer{padding:56px 0 36px}.foot{display:flex;justify-content:space-between;gap:
 .js .rv{opacity:0;transform:translateY(18px);transition:opacity .8s var(--ease),transform .8s var(--ease)}.js .rv.in{opacity:1;transform:none}
 @keyframes rise{from{opacity:0;transform:translateY(18px)}}@keyframes pulse{50%{box-shadow:0 0 0 7px rgba(212,212,216,0)}0%{box-shadow:0 0 0 0 rgba(212,212,216,.5)}}
 @keyframes orbit{to{offset-distance:100%}}@keyframes node{0%,28%{fill:var(--blue);stroke:var(--blue)}35%,100%{fill:#111113;stroke:var(--line)}}
-@media(max-width:900px){.hero,.loop,.imagine,.contact{grid-template-columns:1fr;gap:40px}.nav nav{display:none}.cards{grid-template-columns:1fr}.row{grid-template-columns:50px 1fr;gap:12px}.row .q,.row p{grid-column:2}.sec{padding:64px 0}.two{grid-template-columns:1fr}.roll{grid-template-columns:100px 1fr 40px}}
+@media(max-width:900px){.hero,.loop,.imagine,.contact{grid-template-columns:1fr;gap:40px}.nav nav{display:none}.cards{grid-template-columns:1fr}.pricing-grid{grid-template-columns:repeat(2,1fr)}.pricing-intro{align-items:start;flex-direction:column}.row{grid-template-columns:50px 1fr;gap:12px}.row .q,.row p{grid-column:2}.sec{padding:64px 0}.two{grid-template-columns:1fr}.roll{grid-template-columns:100px 1fr 40px}}
+@media(max-width:620px){.pricing-grid{grid-template-columns:1fr}.price-card{min-height:0}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.js .rv{opacity:1;transform:none}.bar i{width:var(--w)}}
 </style>
 <script>document.documentElement.classList.add("js")</script>
@@ -79,7 +93,7 @@ footer{padding:56px 0 36px}.foot{display:flex;justify-content:space-between;gap:
 <body id="top">
 <header><div class="wrap"><div class="nav">
   <a class="brand" href="#top"><img src="assets/sophron-mark.png" alt="" width="40" height="32" />sophron</a>
-  <nav aria-label="Main"><a href="#approach">Approach</a><a href="#research">Research</a><a href="#principles">Principles</a><a href="#contact">Contact</a></nav>
+  <nav aria-label="Main"><a href="#approach">Approach</a><a href="#research">Research</a><a href="#principles">Principles</a><a href="#pricing">Pricing</a><a href="#contact">Contact</a></nav>
   <a class="btn sm" href="app.html">Try it out</a>
 </div></div></header>
 <main>
@@ -155,6 +169,76 @@ footer{padding:56px 0 36px}.foot{display:flex;justify-content:space-between;gap:
   </div>
 </section>
  
+
+<section class="sec wrap" id="pricing">
+  <div class="pricing-intro">
+    <div><span class="tag">Early access pricing</span><h2>Start experimenting free. Scale when agents reach production.</h2></div>
+    <p>Pricing is based on consequence checks, so teams can add Sophron at the decision boundary without paying per seat.</p>
+  </div>
+  <div class="pricing-grid">
+    <article class="price-card rv">
+      <h3 class="price-name">Sandbox</h3>
+      <p class="price-desc">For exploring consequence-aware agents and prototyping workflows.</p>
+      <div class="price"><strong>$0</strong><span>/ month</span></div>
+      <p class="price-note">No card required</p>
+      <ul class="features">
+        <li>100 consequence checks / month</li>
+        <li>Interactive consequence engine</li>
+        <li>1 project</li>
+        <li>Community support</li>
+      </ul>
+      <a class="btn ghost" href="app.html">Try it out</a>
+    </article>
+
+    <article class="price-card featured rv">
+      <span class="price-badge">Most popular</span>
+      <h3 class="price-name">Developer</h3>
+      <p class="price-desc">For builders integrating Sophron into real agent workflows.</p>
+      <div class="price"><strong>$49</strong><span>/ month</span></div>
+      <p class="price-note">Includes 2,500 checks / month</p>
+      <ul class="features">
+        <li>API access</li>
+        <li>Up to 5 projects</li>
+        <li>Decision logs and evaluation history</li>
+        <li>Custom constraints and policy gates</li>
+        <li>Email support</li>
+      </ul>
+      <a class="btn" href="#contact">Join early access</a>
+    </article>
+
+    <article class="price-card rv">
+      <h3 class="price-name">Team</h3>
+      <p class="price-desc">For teams running multiple agents and higher-volume production checks.</p>
+      <div class="price"><strong>$199</strong><span>/ month</span></div>
+      <p class="price-note">Includes 15,000 checks / month</p>
+      <ul class="features">
+        <li>Everything in Developer</li>
+        <li>Shared team workspace</li>
+        <li>Webhook and execution-gate integrations</li>
+        <li>Usage analytics</li>
+        <li>Priority support</li>
+      </ul>
+      <a class="btn ghost" href="#contact">Talk to us</a>
+    </article>
+
+    <article class="price-card rv">
+      <h3 class="price-name">Enterprise</h3>
+      <p class="price-desc">For consequential agents that need dedicated controls, scale, or deployment requirements.</p>
+      <div class="price"><strong>Custom</strong></div>
+      <p class="price-note">Volume pricing</p>
+      <ul class="features">
+        <li>Custom evaluation volume</li>
+        <li>SSO and advanced access controls</li>
+        <li>Custom retention and audit requirements</li>
+        <li>Dedicated support and SLA</li>
+        <li>Private deployment options</li>
+      </ul>
+      <a class="btn ghost" href="#contact">Contact us</a>
+    </article>
+  </div>
+  <p class="pricing-foot">Early access pricing is indicative while billing and production API access are being rolled out.</p>
+</section>
+
 <section class="sec dark" id="contact"><div class="wrap contact">
   <div><span class="tag">Start a conversation</span><h2>Let’s think worlds ahead.</h2>
     <p style="font-size:18px">Working on the next generation of autonomous systems? Interested in world models or research collaboration? We’d like to hear from you.</p></div>
@@ -166,7 +250,7 @@ footer{padding:56px 0 36px}.foot{display:flex;justify-content:space-between;gap:
   </form>
 </div></section>
 </main>
-<footer><div class="wrap foot"><a class="brand" href="#top"><img src="assets/sophron-mark.png" alt="" width="40" height="32" />sophron</a><nav aria-label="Footer"><a href="#approach">Approach</a><a href="#research">Research</a><a href="#contact">Contact</a></nav><span>© <span id="yr">2026</span> Sophron</span></div></footer>
+<footer><div class="wrap foot"><a class="brand" href="#top"><img src="assets/sophron-mark.png" alt="" width="40" height="32" />sophron</a><nav aria-label="Footer"><a href="#approach">Approach</a><a href="#research">Research</a><a href="#pricing">Pricing</a><a href="#contact">Contact</a></nav><span>© <span id="yr">2026</span> Sophron</span></div></footer>
  
 <script>
 document.getElementById("yr").textContent=new Date().getFullYear();
