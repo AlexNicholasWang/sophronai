@@ -160,9 +160,15 @@ function renderEvaluation(e, meta){
   const plan = arr(e.executionPlan);
   const checks = arr(e.constraintChecks);
   const effects = arr(e.predictedEffects);
+  const sourceLabel = meta.source === "deterministic_environment_gate"
+    ? "DETERMINISTIC ENVIRONMENT GATE"
+    : meta.source === "safety_gate"
+      ? "SAFETY GATE"
+      : "ENVIRONMENT-GROUNDED MODEL";
+  const sourceDetail = meta.model ? "<br>"+esc(meta.model) : "";
 
   $("workspace").innerHTML =
-    '<div class="panel hero fade"><div><div class="summaryRow"><div><span class="verdict tag '+esc(verdict)+'">'+esc(verdict)+'</span><h2 class="summaryTitle">'+esc(e.summary)+'</h2><p class="summaryText">'+esc(e.revisedAction||"")+'</p></div><div class="source">ENV '+esc((meta.environmentId||"").slice(-8))+'<br>'+esc(meta.model||"model")+'<br>'+esc(meta.timings&&meta.timings.totalMs?((meta.timings.totalMs/1000).toFixed(2)+"s"):"")+'</div></div><div class="flow"><span>risk '+esc(Math.round(e.overallRisk||0))+'/100</span><i>→</i><span>confidence '+esc(Math.round(e.confidence||0))+'/100</span><i>→</i><span>admissibility '+esc(admiss.status||"review")+'</span><i>→</i><span>snapshot '+esc((grounding.snapshot||"").slice(0,10))+'</span></div></div></div>' +
+    '<div class="panel hero fade"><div><div class="summaryRow"><div><span class="verdict tag '+esc(verdict)+'">'+esc(verdict)+'</span><h2 class="summaryTitle">'+esc(e.summary)+'</h2><p class="summaryText">'+esc(e.revisedAction||"")+'</p></div><div class="source">'+esc(sourceLabel)+'<br>ENV '+esc((meta.environmentId||"").slice(-8))+sourceDetail+'<br>'+esc(meta.timings&&meta.timings.totalMs?((meta.timings.totalMs/1000).toFixed(2)+"s"):"")+'</div></div><div class="flow"><span>risk '+esc(Math.round(e.overallRisk||0))+'/100</span><i>→</i><span>confidence '+esc(Math.round(e.confidence||0))+'/100</span><i>→</i><span>admissibility '+esc(admiss.status||"review")+'</span><i>→</i><span>snapshot '+esc((grounding.snapshot||"").slice(0,10))+'</span></div></div></div>' +
 
     '<div class="grid fade">' +
       '<div class="panel card span7"><div class="cardHead"><h3>Grounded execution plan</h3><small>'+esc(plan.length)+' steps</small></div>' +
