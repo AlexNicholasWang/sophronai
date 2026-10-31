@@ -99,10 +99,10 @@ footer{padding:56px 0 36px}.foot{display:flex;justify-content:space-between;gap:
 <main>
 <section class="wrap hero">
   <div class="hero-copy">
-    <span class="pill"><b></b>World models for autonomous agents</span>
-    <h1>Intelligence, with a <em>world</em> in mind.</h1>
-    <p>We’re building AI-powered world models that help autonomous agents understand their environments—and reason about what comes next.</p>
-    <div class="cta"><a class="btn" href="app.html">Try it out</a><a class="btn ghost" href="#approach">Explore our approach</a></div>
+    <span class="pill"><b></b>Environment models for autonomous agents</span>
+    <h1>Give every agent a <em>world</em> before control.</h1>
+    <p>Sophron observes the environment itself, compiles a versioned model of what exists and what must remain true, then lets autonomous agents plan and act against that state.</p>
+    <div class="cta"><a class="btn" href="app.html">Compile an environment</a><a class="btn ghost" href="#approach">Explore our approach</a></div>
   </div>
   <div class="demo">
     <div class="demo-bar"><span class="mono">live / agent imagines before it acts</span>
@@ -115,7 +115,7 @@ footer{padding:56px 0 36px}.foot{display:flex;justify-content:space-between;gap:
  
 <section class="sec wrap" id="approach">
   <span class="tag">The world model</span>
-  <h2 class="rv">An internal model. An expanded horizon.</h2>
+  <h2 class="rv">Understanding before autonomy.</h2>
   <div class="loop">
     <svg class="rv" viewBox="0 0 300 300" role="img" aria-label="Perception–action loop: observe, represent, imagine, act">
       <circle cx="150" cy="150" r="120" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="3 7"/>
@@ -129,18 +129,18 @@ footer{padding:56px 0 36px}.foot{display:flex;justify-content:space-between;gap:
       <circle class="dotrun" r="6"/>
     </svg>
     <div class="steps">
-      <div class="step rv"><span>01</span><div><h3>Read the environment</h3><p>Observations are the starting point: signals about the world an agent is operating within.</p></div></div>
-      <div class="step rv"><span>02</span><div><h3>Build a world model</h3><p>An internal representation connects the current state with the dynamics that shape it.</p></div></div>
-      <div class="step rv"><span>03</span><div><h3>Reason forward</h3><p>The model helps an agent anticipate how its environment may change in response to action.</p></div></div>
-      <div class="step rv"><span>04</span><div><h3>Make more informed decisions</h3><p>Connect understanding and prediction to action, with the goal of more reliable behavior.</p></div></div>
+      <div class="step rv"><span>01</span><div><h3>Observe the environment</h3><p>Sophron reads the actual workspace first—structure, files, tools, policies, tests, and other evidence that define the agent’s world.</p></div></div>
+      <div class="step rv"><span>02</span><div><h3>Compile an environment contract</h3><p>Evidence becomes a versioned model of architecture, affordances, invariants, hazards, uncertainty, and verification rules.</p></div></div>
+      <div class="step rv"><span>03</span><div><h3>Ground the action</h3><p>Before planning, Sophron checks that the environment is still current and evaluates the action against what the model says must remain true.</p></div></div>
+      <div class="step rv"><span>04</span><div><h3>Execute and verify</h3><p>The downstream agent receives a concrete action contract with affected areas, preconditions, safeguards, and a way to verify the result.</p></div></div>
     </div>
   </div>
 </section>
  
 <section class="sec dark"><div class="wrap imagine">
-  <div><span class="tag">The power of what if</span><h2>Before acting, imagine.</h2>
-    <p style="font-size:20px;color:#fff;margin-bottom:18px">What if an agent could consider the consequences of a decision before making it?</p>
-    <p>We’re developing models that help agents reason through possible futures, compare courses of action, and respond with more than a reflex. Not only “What is happening?” but “What happens if?”</p></div>
+  <div><span class="tag">Environment-grounded autonomy</span><h2>Before acting, know where you are.</h2>
+    <p style="font-size:20px;color:#fff;margin-bottom:18px">A capable model still fails when it starts blind, assumes the wrong state, or edits a system it does not understand.</p>
+    <p>Sophron gives agents an explicit model of their current environment before execution: what exists, what they can change, what must remain true, what is uncertain, and how to check the result.</p></div>
   <div class="rolls rv"><span class="mono"><span>Action-conditioned futures</span><span>illustrative</span></span>
     <div class="roll top"><span>Route through gap</span><div class="bar"><i style="--w:92%;--i:0"></i></div><span class="mono">0.92</span></div>
     <div class="roll"><span>Wait and observe</span><div class="bar"><i style="--w:64%;--i:1"></i></div><span class="mono">0.64</span></div>
@@ -173,7 +173,7 @@ footer{padding:56px 0 36px}.foot{display:flex;justify-content:space-between;gap:
 <section class="sec wrap" id="pricing">
   <div class="pricing-intro">
     <div><span class="tag">Early access pricing</span><h2>Start experimenting free. Scale when agents reach production.</h2></div>
-    <p>Pricing is based on consequence checks, so teams can add Sophron at the decision boundary without paying per seat.</p>
+    <p>Pricing is based on environment and action checks, so teams can ground autonomous work without paying per seat.</p>
   </div>
   <div class="pricing-grid">
     <article class="price-card rv">
@@ -182,8 +182,8 @@ footer{padding:56px 0 36px}.foot{display:flex;justify-content:space-between;gap:
       <div class="price"><strong>$0</strong><span>/ month</span></div>
       <p class="price-note">No card required</p>
       <ul class="features">
-        <li>100 consequence checks / month</li>
-        <li>Interactive consequence engine</li>
+        <li>100 environment/action checks / month</li>
+        <li>Interactive environment compiler</li>
         <li>1 project</li>
         <li>Community support</li>
       </ul>
