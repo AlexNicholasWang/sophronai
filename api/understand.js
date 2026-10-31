@@ -93,7 +93,9 @@ Rules:
       input: buildEvidenceInput(observation),
       schema: environmentSemanticSchema,
       name: "sophron_environment_model",
-      maxOutputTokens: 3600
+      maxOutputTokens: 1800,
+      model: process.env.SOPHRON_ENV_MODEL || process.env.SOPHRON_MODEL || "gpt-6-luna",
+      reasoningEffort: "low"
     });
   } catch (error) {
     console.error("Environment semantic compilation failed", error);
@@ -120,6 +122,7 @@ Rules:
       fullName: observation.identity.fullName,
       branch: observation.identity.defaultBranch,
       sha: observation.identity.snapshotSha,
+      treeSha: observation.identity.treeSha,
       url: observation.identity.htmlUrl,
       pushedAt: observation.identity.pushedAt,
       archived: observation.identity.archived
