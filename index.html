@@ -268,7 +268,6 @@ footer{padding:56px 0 36px}.foot{display:flex;justify-content:space-between;gap:
 document.getElementById("yr").textContent=new Date().getFullYear();
 const rv=[...document.querySelectorAll(".rv,.rolls")];
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.2});rv.forEach(el=>io.observe(el));
-document.getElementById("f").addEventListener("submit",e=>{e.preventDefault();document.getElementById("st").textContent="This form is not connected yet. Your enquiry has not been sent."});
  
 // Live world-model demo: random-shooting planner over a tiny grid world.
 const cv=document.getElementById("world"),cx=cv.getContext("2d"),W=16,H=10,N=28,T=9,D=[[1,0],[-1,0],[0,1],[0,-1]];
