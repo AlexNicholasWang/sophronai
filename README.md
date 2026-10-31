@@ -41,7 +41,7 @@ The current product contains:
 For a repository, Sophron first computes facts that do not depend on an LLM:
 
 - repository identity and branch;
-- snapshot/tree SHA;
+- immutable commit SHA plus tree SHA;
 - file count and source/test/docs/config/CI surfaces;
 - dominant languages;
 - package managers and selected framework/command signals;
@@ -63,7 +63,7 @@ Repository content is treated as untrusted data so prompt-like instructions insi
 
 An environment model is tied to a repository snapshot.
 
-Before Sophron produces an action plan, it observes the repository again. If the current tree SHA differs from the compiled snapshot, the request fails with `ENVIRONMENT_STALE` and the environment must be rebuilt.
+Before Sophron produces an action plan, it resolves the repository to an immutable commit and observes it again. If the current commit SHA differs from the compiled snapshot, the request fails with `ENVIRONMENT_STALE` and the environment must be rebuilt. Evidence files are also read by that exact commit SHA, so structure and file contents cannot come from different repository moments.
 
 That prevents an agent from planning against a world that no longer exists.
 
@@ -86,7 +86,7 @@ That prevents an agent from planning against a world that no longer exists.
    - safeguards;
    - approve / modify / block verdict.
 
-The current web MVP stops at the execution contract. The intended production integration is for another agent/tool runtime to execute only after Sophron clears and grounds the action.
+The current web MVP stops at the execution contract. Repository mutation is intentionally not performed without an authorized execution runtime. The intended production integration is a GitHub App or sandboxed agent runtime that executes only after Sophron clears and grounds the action, then reports verification and observed outcomes back to Sophron.
 
 ## Why this is not a ChatGPT wrapper
 
@@ -159,15 +159,17 @@ OPENAI_API_KEY=...
 Optional:
 
 ```
-SOPHRON_MODEL=gpt-6-astra
+SOPHRON_ENV_MODEL=gpt-6-luna
+SOPHRON_ACTION_MODEL=gpt-6-luna
+SOPHRON_MODEL=gpt-6-luna
 GITHUB_TOKEN=...
 ```
 
-`SOPHRON_MODEL` defaults to `gpt-6-astra`.
+Environment compilation and action planning default to `gpt-6-luna` in the current MVP. `SOPHRON_ENV_MODEL` and `SOPHRON_ACTION_MODEL` can override the two workloads independently; `SOPHRON_MODEL` is the shared fallback.
 
-`GITHUB_TOKEN` is optional for public repositories. Adding one increases GitHub REST API limits and will be important before meaningful production traffic.
+`GITHUB_TOKEN` is optional for public repositories. Adding one increases GitHub REST API limits and will be important before meaningful production traffic and private-repository support.
 
-Never put either secret in browser code.
+Never put API credentials in browser code.
 
 ## Run locally
 
