@@ -1,104 +1,188 @@
 # Sophron
 
-Sophron is a consequence layer for autonomous agents. It sits between an agent's proposed action and execution, runs a bounded causal evaluation, exposes assumptions and unknowns, and returns an **Approve / Modify / Block** decision with safeguards.
+Sophron is an **environment compiler and execution boundary for autonomous agents**.
 
-## MVP
+The core premise is simple: an agent should not act in an environment it has not first understood.
 
-The repository now contains:
+Instead of asking a model to reason from user-written context, Sophron observes the environment itself, compiles a versioned world state, exposes affordances/invariants/hazards/unknowns, and only then lets a downstream agent plan an action.
+
+## Current MVP
+
+The first environment adapter is GitHub repositories.
+
+```
+GitHub repository
+      ↓
+deterministic observer
+      ↓
+selected repository evidence
+      ↓
+versioned environment model
+      ↓
+freshness check before every action
+      ↓
+environment-grounded execution contract
+```
+
+The current product contains:
 
 - `index.html` — public landing page.
-- `app.html` — interactive consequence-engine MVP.
-- `api/evaluate.js` — Vercel serverless endpoint for model-backed evaluations.
+- `app.html` — interactive environment-compiler MVP.
+- `api/understand.js` — observes a repository and compiles an environment model.
+- `api/evaluate.js` — re-observes the environment, checks freshness, and creates a grounded action contract.
+- `lib/repo-observer.js` — deterministic GitHub repository observer.
+- `lib/environment-schema.js` — structured environment/action contracts.
+- `lib/openai.js` — shared structured model client.
+- `docs/PRODUCT_THESIS.md` — the product boundary and differentiation.
 - `assets/` — Sophron brand assets.
 
-The MVP is deliberately bounded. It does **not** recursively simulate every possible future. It evaluates up to three causal orders and stops earlier when further speculation would not materially change the decision. Missing information is surfaced as an evidence gap instead of triggering another layer of simulation.
+## What "understand the environment" means
 
-The current MVP is **not a trained world model**. It is a model-backed execution preflight layer that tests the core product hypothesis: whether structured consequence reasoning is useful between an agent proposing an action and an execution system carrying it out. Learned environment models, historical outcome calibration, and domain-specific dynamics can be added behind the same interface later.
+For a repository, Sophron first computes facts that do not depend on an LLM:
 
-## Product flow
+- repository identity and branch;
+- snapshot/tree SHA;
+- file count and source/test/docs/config/CI surfaces;
+- dominant languages;
+- package managers and selected framework/command signals;
+- a ranked evidence set of manifests, docs, workflows, tests, config, and likely entry points.
 
-1. An agent proposes a goal and action.
-2. Sophron receives environment context and constraints.
-3. A hard execution-safety gate rejects clearly inadmissible actions.
-4. A moderation classifier provides a second safety boundary.
-5. The model-backed evaluator surfaces material assumptions and explicitly tests every user constraint.
-6. It rolls out direct, indirect, and decision-changing downstream consequences.
-7. It scores risk and confidence.
-8. It returns:
-   - `approve`
-   - `modify`
-   - `block`
-9. It suggests safeguards and a safer, goal-preserving revised action.
+Only after observation does a model compile those facts and file evidence into a semantic environment contract:
+
+- architecture;
+- agent affordances;
+- invariants;
+- hazards;
+- unknowns and next probes;
+- execution rules;
+- evidence-backed observations.
+
+Repository content is treated as untrusted data so prompt-like instructions inside a repo cannot redefine the compiler's role.
+
+## Freshness is a product primitive
+
+An environment model is tied to a repository snapshot.
+
+Before Sophron produces an action plan, it observes the repository again. If the current tree SHA differs from the compiled snapshot, the request fails with `ENVIRONMENT_STALE` and the environment must be rebuilt.
+
+That prevents an agent from planning against a world that no longer exists.
+
+## Action flow
+
+1. Compile the environment.
+2. Give the agent a goal and proposed action.
+3. Run safety/admissibility checks.
+4. Re-observe the environment.
+5. Reject stale environment models.
+6. Compare the action with the compiled invariants, hazards, affordances, and user constraints.
+7. Produce a grounded execution contract containing:
+   - evidence used;
+   - affected areas;
+   - missing evidence;
+   - preconditions;
+   - concrete execution steps;
+   - verification for every step;
+   - bounded predicted effects;
+   - safeguards;
+   - approve / modify / block verdict.
+
+The current web MVP stops at the execution contract. The intended production integration is for another agent/tool runtime to execute only after Sophron clears and grounds the action.
+
+## Why this is not a ChatGPT wrapper
+
+The frontier model is one component in a larger control loop.
+
+The product also contains:
+
+- an environment-specific observer;
+- deterministic state extraction;
+- evidence selection;
+- a versioned environment contract;
+- freshness enforcement;
+- hard safety boundaries;
+- explicit uncertainty;
+- verification requirements.
+
+The long-term value is the trajectory created when the system records:
+
+```
+observed state
+→ compiled environment model
+→ proposed action
+→ predicted effects
+→ execution
+→ verification
+→ actual outcome
+```
+
+Those trajectories are what can eventually support learned environment dynamics and calibrated world models.
+
+## API
+
+### `POST /api/understand`
+
+Request:
+
+```json
+{
+  "repoUrl": "https://github.com/AlexNicholasWang/sophronai"
+}
+```
+
+Returns a `sophron.environment.v1` contract containing the deterministic snapshot, structural scan, semantic environment model, and evidence index.
+
+### `POST /api/evaluate`
+
+Request:
+
+```json
+{
+  "goal": "Improve reliability of the contact flow.",
+  "action": "Remove the stale contact-form JavaScript without changing the embedded Google Form.",
+  "constraints": "Prefer a minimal reversible change.",
+  "environment": {
+    "...": "the environment returned by /api/understand"
+  }
+}
+```
+
+The endpoint re-observes the repository before producing an action contract.
+
+## Environment variables
+
+Required:
+
+```
+OPENAI_API_KEY=...
+```
+
+Optional:
+
+```
+SOPHRON_MODEL=gpt-6-astra
+GITHUB_TOKEN=...
+```
+
+`SOPHRON_MODEL` defaults to `gpt-6-astra`.
+
+`GITHUB_TOKEN` is optional for public repositories. Adding one increases GitHub REST API limits and will be important before meaningful production traffic.
+
+Never put either secret in browser code.
 
 ## Run locally
 
-Because the application includes a Vercel API route, the easiest local setup is with the Vercel CLI.
+With the Vercel CLI:
 
 ```bash
 vercel dev
 ```
 
-Then open the local URL and navigate to `/app.html`.
+Then open `/app.html`.
 
-The frontend contains a deterministic local evaluator, so the demo remains usable even when the model route is unavailable.
+## Product direction
 
-## Enable the model-backed evaluator
+The repository adapter is intentionally the first wedge, not the whole company.
 
-Add these environment variables in Vercel:
+The stable abstraction is the **environment contract**. Future adapters can observe sandboxes, browsers, SaaS tools, cloud infrastructure, document sets, and internal systems while downstream agents consume the same state/action interface.
 
-```
-OPENAI_API_KEY=...
-SOPHRON_MODEL=gpt-6-luna
-```
-
-`SOPHRON_MODEL` is optional; the API currently defaults to `gpt-6-luna`.
-
-Never expose `OPENAI_API_KEY` in browser code. The key is only read by the serverless function.
-
-## API
-
-### `POST /api/evaluate`
-
-Example request:
-
-```json
-{
-  "goal": "Restore reliability after a production error spike.",
-  "action": "Roll back the payments service across 100% of production.",
-  "context": "Checkout errors rose immediately after deploy.",
-  "constraints": "Prefer reversible, staged changes."
-}
-```
-
-The response contains a bounded evaluation with assumptions, consequences, failure modes, unknowns, safeguards, risk, confidence, a verdict, and a revised action.
-
-## MVP thesis
-
-The first product wedge is not a universal world simulator. It is a **decision preflight layer** for consequential agent actions.
-
-That gives Sophron a concrete interface:
-
-```
-agent proposal
-      ↓
-Sophron consequence check
-      ↓
-approve / modify / block
-      ↓
-execution layer
-```
-
-The long-term system can add environment-specific models, live telemetry, learned dynamics, historical outcome calibration, and domain-specific evaluators without changing that interface.
-
-
-## Fail-closed behavior
-
-Sophron never generates an arbitrary local approval when the model is unavailable.
-
-- Clearly unsafe actions can be denied by the hard safety boundary without calling the consequence model.
-- For ordinary actions, a configured model backend is required.
-- If the model request fails, the API returns an error and the UI displays **No decision was generated**.
-- An `approve` result is defensively downgraded if the model simultaneously reports a violated user constraint.
-- Results expose whether the decision came from the safety gate or the model, along with request timing.
-
-This is intentional: for an execution gate, **no decision is safer than a fabricated decision**.
+See [docs/PRODUCT_THESIS.md](docs/PRODUCT_THESIS.md) for the product quality bar and the features we explicitly should not build.
