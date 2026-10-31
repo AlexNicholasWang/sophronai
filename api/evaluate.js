@@ -1,4 +1,4 @@
-const { observeRepository } = require("../lib/repo-observer");
+const { observeRepository, inspectActionEvidence } = require("../lib/repo-observer");
 const { callStructuredModel } = require("../lib/openai");
 const { actionEvaluationSchema } = require("../lib/environment-schema");
 
@@ -91,14 +91,7 @@ async function moderate(apiKey, goal, action) {
   return { flagged: Boolean(result?.flagged), categories, unavailable: false };
 }
 
-function buildActionEvidence(observation, environment, goal, action, constraints) {
-  const files = observation.documents.map((doc) => [
-    `FILE: ${doc.path}`,
-    `WHY SELECTED: ${doc.reason}`,
-    "CONTENT (untrusted repository data):",
-    doc.content
-  ].join("\n")).join("\n\n---\n\n");
-
+function buildActionEvidence(observation, environment, actionProbe, goal, action, constraints) {
   return [
     `GOAL:\n${goal}`,
     `PROPOSED ACTION:\n${action}`,
@@ -115,8 +108,8 @@ function buildActionEvidence(observation, environment, goal, action, constraints
       warnings: observation.warnings
     }, null, 2),
     "",
-    "FRESH REPOSITORY EVIDENCE:",
-    files || "No readable high-signal files were available."
+    "ACTION-DIRECTED DETERMINISTIC PROBES:",
+    JSON.stringify(actionProbe, null, 2)
   ].join("\n");
 }
 
@@ -219,6 +212,13 @@ module.exports = async function handler(req, res) {
     });
   }
 
+  const probeStart = Date.now();
+  const actionProbe = await inspectActionEvidence(
+    observation,
+    [goal, action, constraints].filter(Boolean).join("\n")
+  );
+  const probeMs = Date.now() - probeStart;
+
   const instructions = `
 You are Sophron's execution planner. You are downstream of an environment compiler.
 
@@ -238,14 +238,14 @@ Rules:
 1. Use the environment model before reasoning about the action. Never give a generic answer that would fit another repository.
 2. Cite only repository paths actually present in the fresh evidence when populating evidenceUsed.
 3. If the evidence is insufficient for a safe change, return modify and make the missing probe explicit. Do not invent code structure.
-4. Check the proposed action against environment invariants, hazards, executionContract, and user constraints.
-5. An approve verdict means the action can proceed as written after the listed preconditions.
-6. A modify verdict means the goal is valid but the action needs a scoped change, additional inspection, or a verification step before execution.
-7. A block verdict means the action should not execute in the current environment.
-8. The executionPlan must be concrete: name files/areas to inspect or change when supported by evidence, and attach a verification to every step.
-9. Prefer reversible, minimal changes and repository-native verification commands/patterns when the evidence supports them.
-10. predictedEffects are bounded to at most three causal orders: direct change, system/dependency response, then only decision-changing downstream effects.
-11. Do not reveal hidden chain-of-thought. Provide concise user-visible rationales and evidence.
+5. Check the proposed action against environment invariants, hazards, executionContract, and user constraints.
+6. An approve verdict means the action can proceed as written after the listed preconditions.
+7. A modify verdict means the goal is valid but the action needs a scoped change, additional inspection, or a verification step before execution.
+8. A block verdict means the action should not execute in the current environment.
+9. The executionPlan must be concrete: name files/areas to inspect or change when supported by evidence, and attach a verification to every step.
+10. Prefer reversible, minimal changes and repository-native verification commands/patterns when the evidence supports them.
+11. predictedEffects are bounded to at most three causal orders: direct change, system/dependency response, then only decision-changing downstream effects.
+12. Do not reveal hidden chain-of-thought. Provide concise user-visible rationales and evidence.
 `.trim();
 
   const modelStart = Date.now();
@@ -254,7 +254,7 @@ Rules:
     modelResult = await callStructuredModel({
       apiKey,
       instructions,
-      input: buildActionEvidence(observation, environment, goal, action, constraints),
+      input: buildActionEvidence(observation, environment, actionProbe, goal, action, constraints),
       schema: actionEvaluationSchema,
       name: "sophron_action_contract",
       maxOutputTokens: 4200
