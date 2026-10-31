@@ -13,18 +13,22 @@ The repository now contains:
 
 The MVP is deliberately bounded. It does **not** recursively simulate every possible future. It evaluates up to three causal orders and stops earlier when further speculation would not materially change the decision. Missing information is surfaced as an evidence gap instead of triggering another layer of simulation.
 
+The current MVP is **not a trained world model**. It is a model-backed execution preflight layer that tests the core product hypothesis: whether structured consequence reasoning is useful between an agent proposing an action and an execution system carrying it out. Learned environment models, historical outcome calibration, and domain-specific dynamics can be added behind the same interface later.
+
 ## Product flow
 
 1. An agent proposes a goal and action.
 2. Sophron receives environment context and constraints.
-3. The evaluator surfaces material assumptions.
-4. It rolls out direct, indirect, and decision-changing downstream consequences.
-5. It scores risk and confidence.
-6. It returns:
+3. A hard execution-safety gate rejects clearly inadmissible actions.
+4. A moderation classifier provides a second safety boundary.
+5. The model-backed evaluator surfaces material assumptions and explicitly tests every user constraint.
+6. It rolls out direct, indirect, and decision-changing downstream consequences.
+7. It scores risk and confidence.
+8. It returns:
    - `approve`
    - `modify`
    - `block`
-7. It suggests safeguards and a safer, goal-preserving revised action.
+9. It suggests safeguards and a safer, goal-preserving revised action.
 
 ## Run locally
 
@@ -85,3 +89,16 @@ execution layer
 ```
 
 The long-term system can add environment-specific models, live telemetry, learned dynamics, historical outcome calibration, and domain-specific evaluators without changing that interface.
+
+
+## Fail-closed behavior
+
+Sophron never generates an arbitrary local approval when the model is unavailable.
+
+- Clearly unsafe actions can be denied by the hard safety boundary without calling the consequence model.
+- For ordinary actions, a configured model backend is required.
+- If the model request fails, the API returns an error and the UI displays **No decision was generated**.
+- An `approve` result is defensively downgraded if the model simultaneously reports a violated user constraint.
+- Results expose whether the decision came from the safety gate or the model, along with request timing.
+
+This is intentional: for an execution gate, **no decision is safer than a fabricated decision**.
