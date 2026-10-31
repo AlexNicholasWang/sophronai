@@ -4,244 +4,266 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="theme-color" content="#09090b" />
-<meta name="description" content="Sophron evaluates the consequences of autonomous-agent actions before execution." />
-<title>Sophron — Consequence Engine</title>
+<meta name="description" content="Sophron compiles environments into world models before autonomous agents act." />
+<title>Sophron — Environment Compiler</title>
 <link rel="icon" type="image/png" href="assets/favicon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&family=Geist+Mono:wght@400;500&display=swap" />
 <style>
-:root{color-scheme:dark;--bg:#09090b;--panel:#111113;--panel2:#17171a;--line:#29292e;--text:#f4f4f5;--muted:#9b9ba3;--soft:#d4d4d8;--green:#84cc9a;--amber:#f7b955;--red:#f47f7f;--blue:#a5b4fc;--r:18px;--sm:11px;--ease:cubic-bezier(.2,.7,.2,1)}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased;background-image:radial-gradient(60% 40% at 50% -15%,rgba(255,255,255,.075),transparent),linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:auto,48px 48px,48px 48px}
+:root{color-scheme:dark;--bg:#09090b;--panel:#111113;--panel2:#17171a;--line:#29292e;--text:#f4f4f5;--muted:#9b9ba3;--soft:#d4d4d8;--green:#84cc9a;--amber:#f7b955;--red:#f47f7f;--blue:#a5b4fc;--r:18px;--ease:cubic-bezier(.2,.7,.2,1)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased;background-image:radial-gradient(60% 40% at 50% -15%,rgba(255,255,255,.08),transparent),linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:auto,48px 48px,48px 48px}
 a{color:inherit;text-decoration:none}button,input,textarea{font:inherit}button{color:inherit}.mono{font-family:"Geist Mono",monospace}.muted{color:var(--muted)}
-.shell{min-height:100vh}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rgba(255,255,255,.07);background:rgba(9,9,11,.82);backdrop-filter:blur(16px)}
-.topin{height:68px;width:min(1440px,calc(100% - 32px));margin:auto;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:600;letter-spacing:-.03em}.brand img{width:38px;height:30px;object-fit:contain}.topnav{display:flex;align-items:center;gap:10px}.status{display:flex;align-items:center;gap:8px;font:12px "Geist Mono",monospace;color:var(--muted);padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:var(--panel)}.status i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(132,204,154,.08)}
-.ghost,.primary,.tiny{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:10px 15px;cursor:pointer;transition:.2s var(--ease);font-weight:500}.ghost:hover,.tiny:hover{border-color:#4b4b52;background:var(--panel2)}.primary{background:var(--text);color:#09090b;border-color:var(--text)}.primary:hover{transform:translateY(-1px);box-shadow:0 10px 30px -12px rgba(255,255,255,.35)}.primary:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}.tiny{padding:7px 11px;font-size:12px}
-.layout{width:min(1440px,calc(100% - 32px));margin:0 auto;display:grid;grid-template-columns:430px minmax(0,1fr);gap:18px;padding:18px 0 34px}.panel{background:rgba(17,17,19,.9);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 30px 70px -45px rgba(255,255,255,.18)}.inputPanel{padding:24px;position:sticky;top:86px;align-self:start}.eyebrow{font:11px "Geist Mono",monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}h1{font-size:36px;line-height:1.03;letter-spacing:-.045em;margin:10px 0 10px}h2,h3,p{margin:0}.lead{font-size:15px;color:var(--muted);margin-bottom:22px}
-label{display:grid;gap:7px;margin-top:15px;color:var(--soft);font-size:13px}.req{color:var(--muted)}input,textarea{width:100%;border:1px solid #34343a;background:#0e0e10;color:var(--text);border-radius:12px;padding:12px 13px;outline:none;resize:vertical;transition:border .18s,box-shadow .18s}input:focus,textarea:focus{border-color:#6a6a75;box-shadow:0 0 0 3px rgba(255,255,255,.05)}textarea{min-height:94px}.short{min-height:72px}.actions{display:flex;gap:9px;margin-top:18px}.actions .primary{flex:1;border-radius:12px}.actions .ghost{border-radius:12px}
-.examples{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.chip{border:1px solid var(--line);background:transparent;color:var(--muted);padding:7px 9px;border-radius:999px;font-size:12px;cursor:pointer}.chip:hover{color:var(--text);border-color:#4c4c55}.rule{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:flex-start}.rule b{display:block;font-size:13px;margin-bottom:2px}.rule p{font-size:12px;color:var(--muted)}.rule .num{width:28px;height:28px;border:1px solid var(--line);border-radius:9px;display:grid;place-items:center;font:11px "Geist Mono",monospace;flex:none}
-.results{display:grid;gap:18px;min-width:0}.heroPanel{padding:26px;min-height:230px;display:grid;align-content:center;position:relative;overflow:hidden}.heroPanel:after{content:"";position:absolute;inset:auto -70px -120px auto;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.06),transparent 67%);pointer-events:none}.empty h2{font-size:32px;letter-spacing:-.04em;margin:10px 0}.empty p{max-width:670px;color:var(--muted);font-size:16px}.emptyFlow{display:flex;gap:10px;align-items:center;margin-top:24px;flex-wrap:wrap}.flowbox{padding:10px 12px;border:1px solid var(--line);border-radius:10px;color:var(--soft);font-size:13px;background:#0e0e10}.arrow{color:#55555f}
-.summaryTop{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.verdict{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:7px 10px;font:12px "Geist Mono",monospace;text-transform:uppercase;letter-spacing:.05em;border:1px solid}.verdict i{width:7px;height:7px;border-radius:50%}.approve{color:var(--green);border-color:rgba(132,204,154,.28);background:rgba(132,204,154,.06)}.approve i{background:var(--green)}.modify{color:var(--amber);border-color:rgba(247,185,85,.28);background:rgba(247,185,85,.06)}.modify i{background:var(--amber)}.block{color:var(--red);border-color:rgba(244,127,127,.28);background:rgba(244,127,127,.06)}.block i{background:var(--red)}
-.summary h2{font-size:31px;line-height:1.07;letter-spacing:-.04em;margin:12px 0 11px}.summaryText{font-size:16px;color:#c6c6cc;max-width:850px}.meters{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}.meter{border:1px solid var(--line);background:#0d0d0f;border-radius:12px;padding:13px}.meter small{display:block;color:var(--muted);font-size:11px;margin-bottom:6px}.meter strong{font:500 19px "Geist Mono",monospace}.meter .track{height:5px;background:#242429;border-radius:99px;overflow:hidden;margin-top:8px}.meter .fill{height:100%;background:var(--soft);width:0;transition:width .7s var(--ease)}.source{font:11px "Geist Mono",monospace;color:var(--muted);text-align:right}
-.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,.9fr);gap:18px}.section{padding:22px}.sectionHead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:16px}.sectionHead h3{font-size:19px;letter-spacing:-.025em}.sectionHead span{font:11px "Geist Mono",monospace;color:var(--muted)}
-.timeline{display:grid;gap:10px}.consequence{display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:start;padding:14px;border:1px solid var(--line);background:#0e0e10;border-radius:13px}.order{font:11px "Geist Mono",monospace;color:var(--muted);padding-top:2px}.consequence h4{margin:0 0 4px;font-size:14px;font-weight:500}.consequence p{font-size:12px;color:var(--muted)}.tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.tag{font:10px "Geist Mono",monospace;border:1px solid var(--line);border-radius:999px;padding:5px 7px;color:var(--muted);white-space:nowrap}.tag.critical,.tag.high{color:var(--red);border-color:rgba(244,127,127,.2)}.tag.positive{color:var(--green);border-color:rgba(132,204,154,.2)}
-.list{display:grid;gap:9px}.item{border:1px solid var(--line);background:#0e0e10;border-radius:12px;padding:12px}.item b{font-size:13px;display:block;margin-bottom:4px}.item p,.simple li{font-size:12px;color:var(--muted)}.simple{padding:0;margin:0;list-style:none;display:grid;gap:8px}.simple li{position:relative;padding-left:16px}.simple li:before{content:"";width:5px;height:5px;border-radius:50%;background:#666671;position:absolute;left:1px;top:.55em}.stack{display:grid;gap:18px}
-.revised{font-size:15px;color:#d8d8dd;border-left:2px solid var(--amber);padding-left:14px}.stop{font-size:12px;color:var(--muted);margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
-.gate{border:1px solid var(--line);background:#0e0e10;border-radius:13px;padding:14px}.gateTop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}.gateTop b{font-size:14px}.gate p{font-size:12px;color:var(--muted)}.gateStatus{font:10px "Geist Mono",monospace;text-transform:uppercase;padding:5px 7px;border-radius:999px;border:1px solid var(--line)}.gateStatus.pass{color:var(--green);border-color:rgba(132,204,154,.25)}.gateStatus.review{color:var(--amber);border-color:rgba(247,185,85,.25)}.gateStatus.deny{color:var(--red);border-color:rgba(244,127,127,.25)}
-.constraint{display:grid;grid-template-columns:86px 1fr;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#0e0e10}.constraint+.constraint{margin-top:8px}.constraintState{font:10px "Geist Mono",monospace;text-transform:uppercase}.constraintState.satisfied{color:var(--green)}.constraintState.violated{color:var(--red)}.constraintState.uncertain{color:var(--amber)}.constraint b{font-size:13px;display:block;margin-bottom:3px}.constraint p{font-size:12px;color:var(--muted)}
-.errorPanel{padding:24px;border-color:rgba(244,127,127,.25)}.errorPanel h3{font-size:20px;margin:8px 0}.errorPanel p{color:var(--muted);font-size:14px;max-width:760px}.errorCode{display:inline-block;font:10px "Geist Mono",monospace;color:var(--red);border:1px solid rgba(244,127,127,.25);border-radius:999px;padding:5px 8px}
-.loading{display:none;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin-top:12px}.loading.show{display:flex}.spin{width:14px;height:14px;border:2px solid #39393f;border-top-color:#eee;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.fade{animation:fade .35s var(--ease)}@keyframes fade{from{opacity:0;transform:translateY(6px)}}
-@media(max-width:1050px){.layout{grid-template-columns:1fr}.inputPanel{position:relative;top:auto}.grid2{grid-template-columns:1fr}.meters{grid-template-columns:repeat(3,1fr)}}@media(max-width:650px){.topin,.layout{width:min(100% - 20px,1440px)}.topnav .status{display:none}.layout{padding-top:10px}.inputPanel,.section,.heroPanel{padding:18px}.meters{grid-template-columns:1fr}.consequence{grid-template-columns:48px 1fr}.tags{grid-column:2;justify-content:flex-start}.summaryTop{display:block}.source{text-align:left;margin-top:10px}.emptyFlow{display:none}}
+.top{position:sticky;top:0;z-index:20;border-bottom:1px solid rgba(255,255,255,.07);background:rgba(9,9,11,.86);backdrop-filter:blur(16px)}.topin{height:68px;width:min(1460px,calc(100% - 32px));margin:auto;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:600;letter-spacing:-.03em}.brand img{width:38px;height:30px;object-fit:contain}.topnav{display:flex;align-items:center;gap:10px}.status{display:flex;align-items:center;gap:8px;font:12px "Geist Mono",monospace;color:var(--muted);padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:var(--panel)}.status i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(132,204,154,.08)}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:11px;padding:11px 14px;cursor:pointer;transition:.2s var(--ease);font-weight:500}.btn:hover{border-color:#4b4b52;background:var(--panel2)}.btn.primary{background:var(--text);color:#09090b;border-color:var(--text)}.btn.primary:hover{transform:translateY(-1px);box-shadow:0 10px 30px -12px rgba(255,255,255,.35)}.btn:disabled{opacity:.42;cursor:not-allowed;transform:none!important;box-shadow:none!important}.btn.tiny{padding:7px 10px;font-size:12px;border-radius:999px}
+.layout{width:min(1460px,calc(100% - 32px));margin:0 auto;display:grid;grid-template-columns:420px minmax(0,1fr);gap:18px;padding:18px 0 36px}.panel{background:rgba(17,17,19,.92);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 30px 70px -45px rgba(255,255,255,.18)}.control{padding:22px;position:sticky;top:86px;align-self:start;max-height:calc(100vh - 104px);overflow:auto}.eyebrow{font:11px "Geist Mono",monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}h1{font-size:34px;line-height:1.04;letter-spacing:-.045em;margin:9px 0 9px}h2,h3,h4,p{margin:0}.lead{font-size:14px;color:var(--muted);margin-bottom:18px}.stepBlock{border-top:1px solid var(--line);padding-top:17px;margin-top:17px}.stepHead{display:flex;gap:10px;align-items:center;margin-bottom:10px}.stepNum{width:27px;height:27px;border:1px solid var(--line);border-radius:8px;display:grid;place-items:center;font:10px "Geist Mono",monospace;color:var(--muted)}.stepHead b{font-size:14px}.stepHead span:last-child{font-size:12px;color:var(--muted)}
+label{display:grid;gap:7px;margin-top:13px;color:var(--soft);font-size:13px}input,textarea{width:100%;border:1px solid #34343a;background:#0e0e10;color:var(--text);border-radius:11px;padding:11px 12px;outline:none;resize:vertical;transition:border .18s,box-shadow .18s}input:focus,textarea:focus{border-color:#6a6a75;box-shadow:0 0 0 3px rgba(255,255,255,.05)}input:disabled,textarea:disabled{opacity:.45}textarea{min-height:78px}.short{min-height:62px}.rowActions{display:flex;gap:8px;margin-top:12px}.rowActions .primary{flex:1}.phase{display:none;align-items:center;gap:9px;color:var(--muted);font-size:12px;margin-top:11px}.phase.show{display:flex}.spin{width:13px;height:13px;border:2px solid #39393f;border-top-color:#eee;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.envMini{margin-top:12px;padding:12px;border:1px solid var(--line);background:#0d0d0f;border-radius:12px;display:none}.envMini.show{display:block}.envMiniTop{display:flex;align-items:center;justify-content:space-between;gap:8px}.envMini b{font-size:13px}.envMini p{font:11px "Geist Mono",monospace;color:var(--muted);margin-top:5px;word-break:break-all}.dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px}.hint{font-size:11px;color:var(--muted);margin-top:9px}
+.workspace{display:grid;gap:18px;min-width:0}.hero{padding:26px;min-height:210px;display:grid;align-content:center;overflow:hidden;position:relative}.hero:after{content:"";position:absolute;right:-90px;bottom:-150px;width:390px;height:390px;border-radius:50%;background:radial-gradient(circle,rgba(165,180,252,.08),transparent 66%)}.hero h2{font-size:31px;line-height:1.06;letter-spacing:-.04em;margin:10px 0}.hero p{font-size:16px;color:var(--muted);max-width:830px}.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:21px}.flow span{padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#0e0e10;font-size:12px;color:var(--soft)}.flow i{font-style:normal;color:#55555f}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:18px}.card{padding:20px;min-width:0}.span4{grid-column:span 4}.span5{grid-column:span 5}.span6{grid-column:span 6}.span7{grid-column:span 7}.span8{grid-column:span 8}.span12{grid-column:span 12}.cardHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}.cardHead h3{font-size:18px;letter-spacing:-.02em}.cardHead small{font:10px "Geist Mono",monospace;color:var(--muted)}.metricGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{padding:12px;border:1px solid var(--line);border-radius:11px;background:#0d0d0f}.metric small{display:block;color:var(--muted);font-size:10px;margin-bottom:5px}.metric strong{font:500 18px "Geist Mono",monospace}.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{font:10px "Geist Mono",monospace;padding:5px 7px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}.list{display:grid;gap:8px}.item{padding:11px;border:1px solid var(--line);border-radius:11px;background:#0e0e10}.item b{font-size:13px;display:block;margin-bottom:3px}.item p{font-size:12px;color:var(--muted)}.item .path{font:10px "Geist Mono",monospace;color:var(--blue);margin-top:5px}.tag{font:10px "Geist Mono",monospace;border:1px solid var(--line);border-radius:999px;padding:4px 6px;color:var(--muted);white-space:nowrap}.tag.high,.tag.critical,.tag.deny{color:var(--red);border-color:rgba(244,127,127,.25)}.tag.medium,.tag.review,.tag.modify{color:var(--amber);border-color:rgba(247,185,85,.25)}.tag.low,.tag.pass,.tag.approve{color:var(--green);border-color:rgba(132,204,154,.25)}
+.summaryRow{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.verdict{display:inline-flex;align-items:center;gap:7px;font:11px "Geist Mono",monospace;text-transform:uppercase;padding:6px 8px;border:1px solid var(--line);border-radius:999px}.summaryTitle{font-size:27px;line-height:1.08;letter-spacing:-.035em;margin:10px 0}.summaryText{color:#c4c4cb;font-size:15px;max-width:870px}.source{font:10px "Geist Mono",monospace;color:var(--muted);text-align:right}.plan{display:grid;gap:9px}.planStep{display:grid;grid-template-columns:42px 1fr;gap:11px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#0e0e10}.planNum{font:11px "Geist Mono",monospace;color:var(--muted)}.planStep b{font-size:13px}.planStep p{font-size:12px;color:var(--muted);margin-top:3px}.verify{margin-top:7px;padding-top:7px;border-top:1px solid var(--line);font:10px "Geist Mono",monospace;color:#b8b8c0}.error{padding:22px;border-color:rgba(244,127,127,.25)}.error b{color:var(--red)}.error p{font-size:13px;color:var(--muted);margin-top:6px}.emptyCard{padding:20px;color:var(--muted);font-size:13px}.fade{animation:fade .35s var(--ease)}@keyframes fade{from{opacity:0;transform:translateY(5px)}}
+@media(max-width:1080px){.layout{grid-template-columns:1fr}.control{position:relative;top:auto;max-height:none}.span4,.span5,.span6,.span7,.span8{grid-column:span 12}}@media(max-width:650px){.topin,.layout{width:min(100% - 20px,1460px)}.status{display:none}.metricGrid{grid-template-columns:1fr 1fr}.hero,.card,.control{padding:17px}.summaryRow{display:block}.source{text-align:left;margin-top:9px}}
 </style>
 </head>
 <body>
-<div class="shell">
 <header class="top"><div class="topin">
   <a class="brand" href="index.html"><img src="assets/sophron-mark.png" alt="" />sophron</a>
-  <div class="topnav"><div class="status"><i></i> consequence engine / mvp</div><a class="ghost tiny" href="index.html">About Sophron</a></div>
+  <div class="topnav"><div class="status"><i></i> environment compiler / repo adapter alpha</div><a class="btn tiny" href="index.html">About</a></div>
 </div></header>
 
 <main class="layout">
-  <aside class="panel inputPanel">
-    <div class="eyebrow">Decision preflight</div>
-    <h1>Think before the agent acts.</h1>
-    <p class="lead">Describe an agent action. Sophron rolls forward the consequences, exposes uncertainty, and recommends whether to execute it.</p>
+  <aside class="panel control">
+    <div class="eyebrow">World before action</div>
+    <h1>Place the agent inside the environment.</h1>
+    <p class="lead">Sophron observes the environment first, compiles a world model from evidence, then lets an agent plan against that model.</p>
 
-    <label>Goal <span class="req">What is the agent trying to achieve?</span>
-      <input id="goal" maxlength="1200" placeholder="Reduce support backlog without hurting customer trust" />
-    </label>
-    <label>Proposed action <span class="req">What is it about to do?</span>
-      <textarea id="action" maxlength="2400" placeholder="Automatically refund and close every ticket older than 7 days..."></textarea>
-    </label>
-    <label>Context <span class="req">State, environment, stakeholders</span>
-      <textarea class="short" id="context" maxlength="3200" placeholder="2,000 open tickets; refunds above $200 normally require review..."></textarea>
-    </label>
-    <label>Constraints <span class="req">Policies, permissions, limits</span>
-      <textarea class="short" id="constraints" maxlength="1600" placeholder="Never send irreversible external actions without authorization..."></textarea>
-    </label>
-
-    <div class="actions"><button class="primary" id="run">Run consequence check</button><button class="ghost" id="clear">Clear</button></div>
-    <div class="loading" id="loading"><span class="spin"></span><span id="loadingText">Building bounded causal rollout…</span></div>
-
-    <div class="examples">
-      <button class="chip" data-example="deploy">deployment agent</button>
-      <button class="chip" data-example="support">support agent</button>
-      <button class="chip" data-example="outreach">outreach agent</button>
+    <div class="stepBlock" style="border-top:0;padding-top:0;margin-top:0">
+      <div class="stepHead"><span class="stepNum">01</span><div><b>Compile environment</b><span>Observe before reasoning</span></div></div>
+      <label>GitHub repository
+        <input id="repo" placeholder="https://github.com/owner/repository" />
+      </label>
+      <div class="rowActions"><button class="btn primary" id="compile">Build environment model</button><button class="btn" id="self">Use Sophron</button></div>
+      <div class="phase" id="compilePhase"><span class="spin"></span><span id="compileText">Observing repository…</span></div>
+      <div class="envMini" id="envMini"><div class="envMiniTop"><b><span class="dot"></span><span id="envName">Environment ready</span></b><button class="btn tiny" id="copyEnv">Copy JSON</button></div><p id="envSha"></p></div>
+      <div class="hint">Public GitHub repos work now. Private repo auth and additional environment adapters come next.</div>
     </div>
 
-    <div class="rule"><div class="num">03</div><div><b>Bounded by design</b><p>Sophron stops at three causal orders—or earlier when more speculation would not change the decision. Unknowns become explicit evidence gaps, not another simulator.</p></div></div>
+    <div class="stepBlock">
+      <div class="stepHead"><span class="stepNum">02</span><div><b>Propose action</b><span>Locked until the world exists</span></div></div>
+      <label>Agent goal
+        <input id="goal" disabled maxlength="1400" placeholder="Improve reliability of the contact flow" />
+      </label>
+      <label>Proposed action
+        <textarea id="action" disabled maxlength="2600" placeholder="Remove the stale contact-form handler and preserve the embedded Google Form…"></textarea>
+      </label>
+      <label>Additional constraints
+        <textarea class="short" id="constraints" disabled maxlength="1800" placeholder="Do not break the world-model demo. Prefer minimal reversible changes."></textarea>
+      </label>
+      <div class="rowActions"><button class="btn primary" id="run" disabled>Plan against environment</button><button class="btn" id="clear">Reset</button></div>
+      <div class="phase" id="actionPhase"><span class="spin"></span><span id="actionText">Re-observing environment before planning…</span></div>
+    </div>
   </aside>
 
-  <section class="results" id="results">
-    <div class="panel heroPanel empty" id="hero">
+  <section class="workspace" id="workspace">
+    <div class="panel hero">
       <div>
-        <div class="eyebrow">Sophron consequence layer</div>
-        <h2>A decision boundary between reasoning and execution.</h2>
-        <p>The MVP does not pretend to know the whole future. It asks a narrower question: <strong style="color:#ddd">“Do the decision-relevant consequences we can justify support this action?”</strong></p>
-        <div class="emptyFlow"><span class="flowbox">agent proposes action</span><span class="arrow">→</span><span class="flowbox">bounded rollout</span><span class="arrow">→</span><span class="flowbox">assumptions + unknowns</span><span class="arrow">→</span><span class="flowbox">approve / modify / block</span></div>
+        <div class="eyebrow">Sophron environment layer</div>
+        <h2>An agent should not act in a world it has not modeled.</h2>
+        <p>This MVP starts with repositories. Sophron reads the actual environment, identifies structure, affordances, invariants, hazards and unknowns, then creates a versioned execution contract for downstream agents.</p>
+        <div class="flow"><span>observe</span><i>→</i><span>compile world state</span><i>→</i><span>check freshness</span><i>→</i><span>plan</span><i>→</i><span>verify</span></div>
       </div>
     </div>
+    <div class="panel emptyCard">Connect a repository to build the first environment model.</div>
   </section>
 </main>
-</div>
 
 <script>
-var examples = {
-  deploy: {
-    goal: "Restore reliability after a production error spike.",
-    action: "The deployment agent wants to immediately roll back the payments service to the previous release across 100% of production.",
-    context: "Checkout errors rose from 0.4% to 8.2% five minutes after deploy. The previous release is known stable, but 7% of new payment records use a schema introduced in the new version.",
-    constraints: "Avoid data corruption. Prefer reversible actions. Changes affecting all production traffic should have a staged rollout when feasible."
-  },
-  support: {
-    goal: "Reduce the customer support backlog quickly while preserving trust.",
-    action: "The support agent wants to automatically refund and close every unresolved ticket older than seven days.",
-    context: "There are 2,000 open tickets. Refund amounts range from $5 to $2,500. Some tickets are bug reports, some are billing disputes, and some contain unresolved fraud indicators.",
-    constraints: "Refunds above $200 require human approval. Fraud-related cases cannot be auto-closed. Customers must receive an explanation for account changes."
-  },
-  outreach: {
-    goal: "Book more sales conversations with companies likely to be hiring.",
-    action: "The outreach agent wants to email 500 inferred hiring managers today using addresses enriched from public data.",
-    context: "The model is 73% confident in role matching. Several companies have multiple possible contacts. No recipient has previously interacted with us.",
-    constraints: "Avoid spam-like behavior, respect opt-outs, and do not represent inferred facts as confirmed facts."
-  }
-};
+let environmentModel = null;
 
-function setExample(name){
-  var x=examples[name]; if(!x)return;
-  document.getElementById("goal").value=x.goal;
-  document.getElementById("action").value=x.action;
-  document.getElementById("context").value=x.context;
-  document.getElementById("constraints").value=x.constraints;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+const arr = (x) => Array.isArray(x) ? x : [];
+
+function setActionEnabled(enabled){
+  ["goal","action","constraints","run"].forEach(id => $(id).disabled = !enabled);
 }
 
-document.querySelectorAll("[data-example]").forEach(function(b){
-  b.addEventListener("click",function(){setExample(b.getAttribute("data-example"));});
-});
-
-document.getElementById("clear").addEventListener("click",function(){
-  ["goal","action","context","constraints"].forEach(function(id){document.getElementById(id).value="";});
-  resetResults();
-});
-
-function resetResults(){
-  document.getElementById("results").innerHTML =
-    '<div class="panel heroPanel empty" id="hero"><div><div class="eyebrow">Sophron consequence layer</div><h2>A decision boundary between reasoning and execution.</h2><p>The MVP does not pretend to know the whole future. It asks a narrower question: <strong style="color:#ddd">“Do the decision-relevant consequences we can justify support this action?”</strong></p><div class="emptyFlow"><span class="flowbox">agent proposes action</span><span class="arrow">→</span><span class="flowbox">bounded rollout</span><span class="arrow">→</span><span class="flowbox">assumptions + unknowns</span><span class="arrow">→</span><span class="flowbox">approve / modify / block</span></div></div></div>';
+function setPhase(id, textId, on, text){
+  $(id).classList.toggle("show", on);
+  if(text) $(textId).textContent = text;
 }
 
-function esc(s){
-  return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c];});
+function errorCard(title, message, code){
+  return '<div class="panel error fade"><b>'+esc(title)+'</b><p>'+esc(message)+'</p>'+(code?'<p class="mono">'+esc(code)+'</p>':'')+'</div>';
 }
-function clamp(n){n=Number(n)||0;return Math.max(0,Math.min(100,Math.round(n)));}
 
-function renderEvaluation(e, meta){
-  var verdict=(e.verdict||"modify").toLowerCase();
-  if(["approve","modify","block"].indexOf(verdict)<0) verdict="modify";
-  var risk=clamp(e.overallRisk), conf=clamp(e.confidence);
-  var consequences=Array.isArray(e.consequences)?e.consequences:[];
-  var assumptions=Array.isArray(e.assumptions)?e.assumptions:[];
-  var unknowns=Array.isArray(e.unknowns)?e.unknowns:[];
-  var safeguards=Array.isArray(e.safeguards)?e.safeguards:[];
-  var failures=Array.isArray(e.failureModes)?e.failureModes:[];
-  var checks=Array.isArray(e.constraintChecks)?e.constraintChecks:[];
-  var gate=e.admissibility||{status:"review",rationale:"Admissibility was not returned.",categories:[]};
-  var source=meta&&meta.source?meta.source:"model";
-  var totalMs=meta&&meta.timings&&meta.timings.totalMs?meta.timings.totalMs:null;
-  var sourceText=source==="safety_gate"?"SAFETY GATE":"MODEL EVALUATION";
-  if(source==="model"&&meta&&meta.model) sourceText+=" · "+meta.model;
-  if(totalMs!=null) sourceText+=" · "+(totalMs/1000).toFixed(2)+"s";
+function itemList(items, renderer, empty){
+  if(!items.length) return '<div class="emptyCard">'+esc(empty)+'</div>';
+  return '<div class="list">'+items.map(renderer).join("")+'</div>';
+}
 
-  var timeline=consequences.map(function(c){
-    return '<div class="consequence"><div class="order">ORDER '+esc(c.order)+'</div><div><h4>'+esc(c.outcome)+'</h4><p>'+esc(c.rationale||"")+'</p></div><div class="tags"><span class="tag '+esc(c.impact)+'">'+esc(c.impact||"")+' impact</span><span class="tag '+esc(c.valence)+'">'+esc(c.likelihood||"")+' likelihood</span></div></div>';
-  }).join("");
+function renderEnvironment(env, meta){
+  const s = env.structural || {};
+  const sem = env.semantic || {};
+  const languages = arr(s.languages);
+  const arch = arr(sem.architecture);
+  const affordances = arr(sem.affordances);
+  const invariants = arr(sem.invariants);
+  const hazards = arr(sem.hazards);
+  const unknowns = arr(sem.unknowns);
+  const evidence = arr(env.evidence);
+  const contract = sem.executionContract || {};
 
-  var failureHtml=failures.map(function(f){
-    return '<div class="item"><b>'+esc(f.mode)+'</b><p><strong style="color:#c8c8ce">Trigger:</strong> '+esc(f.trigger)+'<br><strong style="color:#c8c8ce">Mitigation:</strong> '+esc(f.mitigation)+'</p></div>';
-  }).join("");
+  $("workspace").innerHTML =
+    '<div class="panel hero fade"><div><div class="eyebrow">Environment compiled · '+esc(env.contractVersion)+'</div><h2>'+esc(env.snapshot.fullName)+'</h2><p>'+esc(sem.summary || "Repository environment compiled.")+'</p><div class="flow"><span>snapshot '+esc((env.snapshot.sha||"unknown").slice(0,10))+'</span><i>→</i><span>'+esc(s.totalFiles||0)+' files observed</span><i>→</i><span>'+esc(evidence.length)+' evidence files read</span><i>→</i><span>'+esc(Math.round(sem.confidence||0))+'% semantic confidence</span></div></div></div>' +
 
-  var checkHtml=checks.length?checks.map(function(c){
-    var status=["satisfied","violated","uncertain"].indexOf(c.status)>=0?c.status:"uncertain";
-    return '<div class="constraint"><div class="constraintState '+status+'">'+esc(status)+'</div><div><b>'+esc(c.constraint)+'</b><p>'+esc(c.explanation)+'</p></div></div>';
-  }).join(""):'<p class="muted" style="font-size:12px">No explicit constraints were supplied.</p>';
+    '<div class="grid fade">' +
+      '<div class="panel card span4"><div class="cardHead"><h3>Observed state</h3><small>deterministic</small></div><div class="metricGrid">' +
+        '<div class="metric"><small>FILES</small><strong>'+esc(s.totalFiles||0)+'</strong></div>' +
+        '<div class="metric"><small>SOURCE</small><strong>'+esc(s.sourceFiles||0)+'</strong></div>' +
+        '<div class="metric"><small>TESTS</small><strong>'+esc(s.testFiles||0)+'</strong></div>' +
+        '<div class="metric"><small>CI</small><strong>'+esc(s.workflowFiles||0)+'</strong></div>' +
+        '<div class="metric"><small>CONFIG</small><strong>'+esc(s.configFiles||0)+'</strong></div>' +
+        '<div class="metric"><small>DOCS</small><strong>'+esc(s.documentationFiles||0)+'</strong></div>' +
+      '</div><div class="chips" style="margin-top:12px">'+languages.map(l=>'<span class="chip">'+esc(l.name)+' · '+esc(l.files)+'</span>').join("")+arr(s.frameworks).map(x=>'<span class="chip">'+esc(x)+'</span>').join("")+'</div></div>' +
 
-  function list(arr){return arr.length?'<ul class="simple">'+arr.map(function(x){return '<li>'+esc(x)+'</li>';}).join("")+'</ul>':'<p class="muted" style="font-size:12px">None identified.</p>';}
+      '<div class="panel card span8"><div class="cardHead"><h3>Architecture</h3><small>evidence-grounded</small></div>'+itemList(arch, x =>
+        '<div class="item"><b>'+esc(x.component)+'</b><p>'+esc(x.responsibility)+'</p><div class="path">'+esc(arr(x.paths).join(" · "))+'</div></div>', "No architecture could be established from current evidence.")+'</div>' +
 
-  var gateCats=Array.isArray(gate.categories)&&gate.categories.length
-    ? '<p style="margin-top:7px">Categories: '+gate.categories.map(esc).join(", ")+'</p>'
-    : '';
+      '<div class="panel card span6"><div class="cardHead"><h3>Agent affordances</h3><small>what can be done</small></div>'+itemList(affordances, x =>
+        '<div class="item"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(x.action)+'</b><span class="tag '+esc(x.risk)+'">'+esc(x.risk)+' risk</span></div><p>'+esc(x.scope)+'</p><div class="path">'+esc(arr(x.evidence).join(" · "))+'</div></div>', "No safe affordances established.")+'</div>' +
 
-  document.getElementById("results").innerHTML =
-    '<div class="panel heroPanel summary fade">'+
-      '<div class="summaryTop"><div><div class="verdict '+verdict+'"><i></i>'+verdict+'</div><h2>'+esc(e.summary||"Evaluation complete.")+'</h2><p class="summaryText">'+
-      (verdict==="approve"?"The action cleared the safety boundary and no supplied constraint was violated within the bounded horizon.":verdict==="modify"?"The goal may be reasonable, but the proposed action needs changes before execution.":"The proposed action should not execute as written.")+
-      '</p></div><div class="source">'+esc(sourceText)+'</div></div>'+
-      '<div class="meters"><div class="meter"><small>overall risk</small><strong>'+risk+'/100</strong><div class="track"><div class="fill" style="width:'+risk+'%"></div></div></div>'+
-      '<div class="meter"><small>confidence</small><strong>'+conf+'/100</strong><div class="track"><div class="fill" style="width:'+conf+'%"></div></div></div>'+
-      '<div class="meter"><small>causal horizon</small><strong style="font-size:15px">'+esc(e.boundedHorizon||"3 orders")+'</strong><div class="track"><div class="fill" style="width:100%"></div></div></div></div>'+
-    '</div>'+
-    '<div class="grid2 fade">'+
-      '<div class="panel section"><div class="sectionHead"><h3>Execution boundary</h3><span>safety + authorization</span></div><div class="gate"><div class="gateTop"><b>Admissibility</b><span class="gateStatus '+esc(gate.status)+'">'+esc(gate.status)+'</span></div><p>'+esc(gate.rationale||"")+'</p>'+gateCats+'</div></div>'+
-      '<div class="panel section"><div class="sectionHead"><h3>Constraint checks</h3><span>tested against action + rollout</span></div>'+checkHtml+'</div>'+
-    '</div>'+
-    '<div class="grid2 fade">'+
-      '<div class="panel section"><div class="sectionHead"><h3>Consequence rollout</h3><span>decision-relevant branches only</span></div><div class="timeline">'+timeline+'</div></div>'+
-      '<div class="stack">'+
-        '<div class="panel section"><div class="sectionHead"><h3>Assumptions</h3><span>what must be true</span></div>'+list(assumptions)+'</div>'+
-        '<div class="panel section"><div class="sectionHead"><h3>Unknowns</h3><span>evidence gaps, not invented facts</span></div>'+list(unknowns)+'</div>'+
-      '</div>'+
-    '</div>'+
-    '<div class="grid2 fade">'+
-      '<div class="panel section"><div class="sectionHead"><h3>Failure modes</h3><span>pre-mortem</span></div><div class="list">'+failureHtml+'</div></div>'+
-      '<div class="stack">'+
-        '<div class="panel section"><div class="sectionHead"><h3>Safeguards</h3><span>before execution</span></div>'+list(safeguards)+'</div>'+
-        '<div class="panel section"><div class="sectionHead"><h3>Revised action</h3><span>goal-preserving</span></div><p class="revised">'+esc(e.revisedAction||"")+'</p><p class="stop"><strong style="color:#c8c8ce">Why Sophron stopped:</strong> '+esc(e.stopReason||"Bounded horizon reached.")+'</p></div>'+
-      '</div>'+
+      '<div class="panel card span6"><div class="cardHead"><h3>Invariants</h3><small>what must stay true</small></div>'+itemList(invariants, x =>
+        '<div class="item"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(x.rule)+'</b><span class="tag">'+esc(x.strength)+'</span></div><p>'+esc(x.why)+'</p><div class="path">'+esc(arr(x.evidence).join(" · "))+'</div></div>', "No invariants established.")+'</div>' +
+
+      '<div class="panel card span6"><div class="cardHead"><h3>Hazards</h3><small>failure surfaces</small></div>'+itemList(hazards, x =>
+        '<div class="item"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(x.hazard)+'</b><span class="tag '+esc(x.severity)+'">'+esc(x.severity)+'</span></div><p>'+esc(x.impact)+'</p><div class="path">'+esc(arr(x.evidence).join(" · "))+'</div></div>', "No hazards established.")+'</div>' +
+
+      '<div class="panel card span6"><div class="cardHead"><h3>Unknowns</h3><small>do not hallucinate past these</small></div>'+itemList(unknowns, x =>
+        '<div class="item"><b>'+esc(x.question)+'</b><p>'+esc(x.whyItMatters)+'</p><div class="path">next probe · '+esc(x.probe)+'</div></div>', "No material unknowns were returned.")+'</div>' +
+
+      '<div class="panel card span7"><div class="cardHead"><h3>Execution contract</h3><small>downstream agent rules</small></div>' +
+        '<div class="item"><b>Before write</b><p>'+esc(arr(contract.beforeWrite).join(" · ") || "None returned")+'</p></div>' +
+        '<div class="item"><b>Verify after</b><p>'+esc(arr(contract.verifyAfter).join(" · ") || "None returned")+'</p></div>' +
+        '<div class="item"><b>Protected areas</b><p>'+esc(arr(contract.protectedAreas).join(" · ") || "None returned")+'</p></div>' +
+      '</div>' +
+
+      '<div class="panel card span5"><div class="cardHead"><h3>Evidence index</h3><small>'+esc(evidence.length)+' files</small></div>'+itemList(evidence.slice(0,10), x =>
+        '<div class="item"><b>'+esc(x.path)+'</b><p>'+esc(x.reason)+'</p></div>', "No evidence files.")+'</div>' +
     '</div>';
 }
 
-function renderError(message, code){
-  document.getElementById("results").innerHTML =
-    '<div class="panel errorPanel fade"><span class="errorCode">'+esc(code||"EVALUATOR_UNAVAILABLE")+'</span><h3>No decision was generated.</h3><p>'+esc(message||"The model-backed evaluator is unavailable.")+'</p><p style="margin-top:10px">Sophron fails closed: it will not substitute a heuristic or canned approval when the consequence model is unavailable.</p></div>';
+function renderEvaluation(e, meta){
+  const verdict = ["approve","modify","block"].includes(e.verdict) ? e.verdict : "modify";
+  const grounding = e.environmentGrounding || {};
+  const admiss = e.admissibility || {};
+  const plan = arr(e.executionPlan);
+  const checks = arr(e.constraintChecks);
+  const effects = arr(e.predictedEffects);
+
+  $("workspace").innerHTML =
+    '<div class="panel hero fade"><div><div class="summaryRow"><div><span class="verdict tag '+esc(verdict)+'">'+esc(verdict)+'</span><h2 class="summaryTitle">'+esc(e.summary)+'</h2><p class="summaryText">'+esc(e.revisedAction||"")+'</p></div><div class="source">ENV '+esc((meta.environmentId||"").slice(-8))+'<br>'+esc(meta.model||"model")+'<br>'+esc(meta.timings&&meta.timings.totalMs?((meta.timings.totalMs/1000).toFixed(2)+"s"):"")+'</div></div><div class="flow"><span>risk '+esc(Math.round(e.overallRisk||0))+'/100</span><i>→</i><span>confidence '+esc(Math.round(e.confidence||0))+'/100</span><i>→</i><span>admissibility '+esc(admiss.status||"review")+'</span><i>→</i><span>snapshot '+esc((grounding.snapshot||"").slice(0,10))+'</span></div></div></div>' +
+
+    '<div class="grid fade">' +
+      '<div class="panel card span7"><div class="cardHead"><h3>Grounded execution plan</h3><small>'+esc(plan.length)+' steps</small></div>' +
+        (plan.length?'<div class="plan">'+plan.map(x=>'<div class="planStep"><div class="planNum">0'+esc(x.step)+'</div><div><b>'+esc(x.action)+' · '+esc(x.target)+'</b><p>'+esc(x.reason)+'</p><div class="verify">verify → '+esc(x.verification)+' · '+(x.reversible?'reversible':'not clearly reversible')+'</div></div></div>').join("")+'</div>':'<div class="emptyCard">No execution steps were authorized.</div>') +
+      '</div>' +
+
+      '<div class="panel card span5"><div class="cardHead"><h3>Environment grounding</h3><small>'+esc(arr(grounding.evidenceUsed).length)+' cited</small></div>' +
+        itemList(arr(grounding.evidenceUsed), x=>'<div class="item"><b>'+esc(x.path)+'</b><p>'+esc(x.why)+'</p></div>', "No repository evidence cited.") +
+      '</div>' +
+
+      '<div class="panel card span4"><div class="cardHead"><h3>Preconditions</h3><small>before execution</small></div>'+itemList(arr(e.preconditions), x=>'<div class="item"><p>'+esc(x)+'</p></div>', "No additional preconditions.")+'</div>' +
+
+      '<div class="panel card span4"><div class="cardHead"><h3>Constraint checks</h3><small>explicit</small></div>'+itemList(checks, x=>'<div class="item"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(x.constraint)+'</b><span class="tag '+(x.status==="violated"?"deny":x.status==="uncertain"?"review":"pass")+'">'+esc(x.status)+'</span></div><p>'+esc(x.explanation)+'</p></div>', "No extra constraints supplied.")+'</div>' +
+
+      '<div class="panel card span4"><div class="cardHead"><h3>Safeguards</h3><small>execution boundary</small></div>'+itemList(arr(e.safeguards), x=>'<div class="item"><p>'+esc(x)+'</p></div>', "No safeguards returned.")+'</div>' +
+
+      '<div class="panel card span12"><div class="cardHead"><h3>Bounded effects</h3><small>'+esc(effects.length)+' modeled</small></div>'+itemList(effects, x=>'<div class="item"><div style="display:flex;justify-content:space-between;gap:8px"><b>Order '+esc(x.order)+' · '+esc(x.outcome)+'</b><span class="tag '+esc(x.impact)+'">'+esc(x.likelihood)+' / '+esc(x.impact)+'</span></div><p>'+esc(x.rationale)+'</p></div>', "No downstream effects needed.")+'<p class="hint" style="margin-top:12px">'+esc(e.stopReason||"")+'</p></div>' +
+    '</div>';
 }
 
-document.getElementById("run").addEventListener("click", async function(){
-  var data={
-    goal:document.getElementById("goal").value.trim(),
-    action:document.getElementById("action").value.trim(),
-    context:document.getElementById("context").value.trim(),
-    constraints:document.getElementById("constraints").value.trim()
-  };
-  if(!data.goal||!data.action){
-    alert("Add a goal and a proposed action first.");
-    return;
-  }
-
-  var btn=document.getElementById("run"), loading=document.getElementById("loading");
-  btn.disabled=true;
-  loading.classList.add("show");
-  document.getElementById("loadingText").textContent="Checking execution boundary and running model-backed consequence analysis…";
+async function compileEnvironment(){
+  const repoUrl = $("repo").value.trim();
+  if(!repoUrl) return;
+  environmentModel = null;
+  setActionEnabled(false);
+  $("compile").disabled = true;
+  setPhase("compilePhase","compileText",true,"Observing repository and selecting evidence…");
 
   try{
-    var response=await fetch("/api/evaluate",{
+    const response = await fetch("/api/understand",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(data)
+      body:JSON.stringify({repoUrl})
     });
-    var payload=await response.json().catch(function(){return {};});
+    const payload = await response.json();
+    if(!response.ok || !payload.environment) throw Object.assign(new Error(payload.error||"Environment compilation failed."),{code:payload.code});
 
-    if(response.ok&&payload.evaluation){
-      renderEvaluation(payload.evaluation,payload);
-    }else{
-      renderError(payload.error||"The model-backed evaluator could not complete this request.",payload.code||"EVALUATION_FAILED");
-    }
-  }catch(err){
-    renderError("The evaluator could not be reached. No fallback decision was generated.","NETWORK_ERROR");
+    environmentModel = payload.environment;
+    $("envName").textContent = environmentModel.snapshot.fullName;
+    $("envSha").textContent = "snapshot "+(environmentModel.snapshot.sha||"unknown")+" · "+environmentModel.environmentId;
+    $("envMini").classList.add("show");
+    setActionEnabled(true);
+    renderEnvironment(environmentModel,payload);
+  }catch(error){
+    $("workspace").innerHTML = errorCard("Environment compilation failed",error.message,error.code);
   }finally{
-    btn.disabled=false;
-    loading.classList.remove("show");
+    $("compile").disabled = false;
+    setPhase("compilePhase","compileText",false);
+  }
+}
+
+async function evaluateAction(){
+  if(!environmentModel) return;
+  const goal = $("goal").value.trim(), action = $("action").value.trim(), constraints = $("constraints").value.trim();
+  if(!goal || !action) return;
+
+  $("run").disabled = true;
+  setPhase("actionPhase","actionText",true,"Re-observing snapshot, checking invariants, then planning…");
+  try{
+    const response = await fetch("/api/evaluate",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({goal,action,constraints,environment:environmentModel})
+    });
+    const payload = await response.json();
+    if(response.status===409 && payload.code==="ENVIRONMENT_STALE"){
+      environmentModel = null;
+      setActionEnabled(false);
+      $("envMini").classList.remove("show");
+      throw Object.assign(new Error(payload.error),{code:payload.code});
+    }
+    if(!response.ok || !payload.evaluation) throw Object.assign(new Error(payload.error||"Action planning failed."),{code:payload.code});
+    renderEvaluation(payload.evaluation,payload);
+  }catch(error){
+    $("workspace").innerHTML = errorCard("No action contract generated",error.message,error.code);
+  }finally{
+    if(environmentModel) $("run").disabled = false;
+    setPhase("actionPhase","actionText",false);
+  }
+}
+
+$("compile").addEventListener("click",compileEnvironment);
+$("repo").addEventListener("keydown",e=>{if(e.key==="Enter") compileEnvironment();});
+$("run").addEventListener("click",evaluateAction);
+$("self").addEventListener("click",()=>{$("repo").value="https://github.com/AlexNicholasWang/sophronai";compileEnvironment();});
+$("clear").addEventListener("click",()=>{
+  environmentModel=null;
+  $("repo").value="";$("goal").value="";$("action").value="";$("constraints").value="";
+  $("envMini").classList.remove("show");setActionEnabled(false);
+  $("workspace").innerHTML='<div class="panel hero"><div><div class="eyebrow">Sophron environment layer</div><h2>An agent should not act in a world it has not modeled.</h2><p>Connect a repository to observe and compile the environment before planning an action.</p><div class="flow"><span>observe</span><i>→</i><span>compile world state</span><i>→</i><span>check freshness</span><i>→</i><span>plan</span><i>→</i><span>verify</span></div></div></div><div class="panel emptyCard">Connect a repository to build the first environment model.</div>';
+});
+$("copyEnv").addEventListener("click",async()=>{
+  if(!environmentModel) return;
+  try{
+    await navigator.clipboard.writeText(JSON.stringify(environmentModel,null,2));
+    $("copyEnv").textContent="Copied";
+    setTimeout(()=>$("copyEnv").textContent="Copy JSON",1200);
+  }catch{
+    $("copyEnv").textContent="Copy failed";
   }
 });
-
 </script>
 </body>
 </html>
