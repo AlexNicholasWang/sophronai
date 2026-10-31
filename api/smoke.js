@@ -58,6 +58,8 @@ module.exports = async function handler(req, res) {
       })),
       invariants: environment.semantic.invariants.slice(0, 5)
     },
+    source: evaluated.payload?.source,
+    groundingProbe: evaluated.payload?.groundingProbe,
     action: e ? {
       verdict: e.verdict,
       summary: e.summary,
